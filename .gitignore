@@ -1,0 +1,17 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+dist-ssr
+coverage
+*.tsbuildinfo
+.turbo
+
+# Logs
+*.log
+
+# Editor / OS
+.history
+.DS_Store
+*.local

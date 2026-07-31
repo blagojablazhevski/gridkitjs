@@ -1,0 +1,7 @@
+packages:
+  - "packages/*"
+  - "apps/*"
+
+# Build scripts are blocked by default; allow only what genuinely needs one.
+onlyBuiltDependencies:
+  - esbuild

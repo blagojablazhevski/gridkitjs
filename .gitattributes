@@ -1,0 +1,13 @@
+# Normalize text files to LF in the repo *and* in working copies on every OS.
+# Without `eol=lf`, Windows checkouts get CRLF while Prettier's default
+# `endOfLine: "lf"` expects LF, so `pnpm format:check` would fail locally but
+# pass in CI.
+* text=auto eol=lf
+
+# Binary assets must never be normalized.
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
