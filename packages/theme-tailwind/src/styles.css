@@ -53,3 +53,27 @@
   --color-fg-muted: var(--gridkit-fg-muted);
   --color-accent: var(--gridkit-accent);
 }
+
+/*
+ * Grid styles.
+ */
+.gridkit-data-grid {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.gridkit-data-grid .grid-header {
+  background-color: var(--gridkit-surface);
+}
+
+.gridkit-data-grid .grid-cell {
+  border-bottom: 1px solid var(--gridkit-line);
+}
+
+.gridkit-data-grid .grid-cell {
+  padding: 0.5rem;
+}
+
+.gridkit-data-grid .grid-row:hover {
+  background-color: var(--gridkit-surface-muted);
+}

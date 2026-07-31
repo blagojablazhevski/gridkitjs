@@ -21,28 +21,31 @@ export function DataGridComponent<Row>({
   columns,
 }: DataGridProps<Row>) {
   return (
-    <table>
-      <tr>
-        {columns?.map((column) => (
-          <th key={column.field}>
-            {column.header
-              ? typeof column.header === "function"
-                ? column.header()
-                : column.header
-              : column.field.split(".").join(" ")}
-          </th>
+    <table className="gridkit-data-grid">
+      <thead>
+        <tr className="grid-header">
+          {columns?.map((column) => (
+            <th key={column.field} className="header-cell">
+              {column.header
+                ? typeof column.header === "function"
+                  ? column.header()
+                  : column.header
+                : column.field.split(".").join(" ")}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody className="grid-body">
+        {dataSource?.map((row, index) => (
+          <tr key={index} className="grid-row">
+            {columns?.map((column) => (
+              <td key={column.field} className="grid-cell">
+                {accessDotted(row, column.field) as ReactNode}
+              </td>
+            ))}
+          </tr>
         ))}
-      </tr>
-      <tr>
-        {columns?.map((column) => (
-          <td key={column.field}>
-            {/* {dataSource?.map((row) => row[column.field])} */}
-            {dataSource?.map(
-              (row) => accessDotted(row, column.field) as ReactNode,
-            )}
-          </td>
-        ))}
-      </tr>
+      </tbody>
     </table>
   );
 }
