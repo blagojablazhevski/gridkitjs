@@ -1,0 +1,15 @@
+{
+  "name": "@gridkit/theme-tailwind",
+  "version": "0.0.1",
+  "private": true,
+  "files": [
+    "src"
+  ],
+  "exports": {
+    "./styles.css": "./src/styles.css"
+  },
+  "peerDependencies": {
+    "@gridkit/react": "workspace:*",
+    "tailwindcss": "^4.3.3"
+  }
+}

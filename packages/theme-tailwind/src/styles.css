@@ -1,0 +1,55 @@
+/*
+ * GridKit tailwind theme.
+ *
+ */
+
+@source "../../react/dist/";
+
+/*
+ * Tailwind's `dark:` variant follows the OS preference by default. Bind it to
+ * a `.dark` class instead so consumers can drive the theme themselves.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * The palette. Light is the default; `.dark` redefines the same names, so a
+ * token means "the header background", not "light grey".
+ */
+:root {
+  color-scheme: light;
+
+  --gridkit-surface: oklch(1 0 0);
+  --gridkit-surface-muted: oklch(0.97 0.003 250);
+  --gridkit-line: oklch(0.92 0.005 250);
+  --gridkit-fg: oklch(0.21 0.01 250);
+  --gridkit-fg-muted: oklch(0.55 0.015 250);
+  --gridkit-accent: oklch(0.6 0.17 255);
+}
+
+.dark {
+  color-scheme: dark;
+
+  --gridkit-surface: oklch(0.21 0.01 250);
+  --gridkit-surface-muted: oklch(0.26 0.012 250);
+  --gridkit-line: oklch(0.33 0.014 250);
+  --gridkit-fg: oklch(0.97 0.003 250);
+  --gridkit-fg-muted: oklch(0.7 0.015 250);
+  --gridkit-accent: oklch(0.7 0.15 255);
+}
+
+/*
+ * `inline` is what makes the swap work. Without it Tailwind emits
+ * `--color-surface: var(--gridkit-surface)` on `:root`, which resolves once
+ * against the light values and is then inherited already-resolved — a `.dark`
+ * further down the tree would have nothing left to override. `inline`
+ * substitutes the var into each utility instead, so it resolves at the element
+ * the class sits on.
+ */
+@theme inline {
+  --color-surface: var(--gridkit-surface);
+  --color-surface-muted: var(--gridkit-surface-muted);
+  --color-line: var(--gridkit-line);
+  --color-fg: var(--gridkit-fg);
+  --color-fg-muted: var(--gridkit-fg-muted);
+  --color-accent: var(--gridkit-accent);
+}
