@@ -11,7 +11,9 @@
     "lint": "eslint src"
   },
   "dependencies": {
+    "@gridkit/core": "workspace:*",
     "@gridkit/react": "workspace:*",
+    "@gridkit/theme-tailwind": "workspace:*",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },
