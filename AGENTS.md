@@ -89,8 +89,13 @@ Scope is the package without its namespace — `core`, `react`, `theme-default`,
 `playground` — and is omitted for repo-wide changes.
 
 Breaking changes take a `!` before the colon (`feat(core)!: ...`) plus a
-`BREAKING CHANGE:` footer. A body is optional — add one only to explain _why_,
-never to restate the diff.
+`BREAKING CHANGE:` footer.
+
+**Default to no body.** Add one only when there's a genuinely non-obvious
+_why_ — a bug workaround, a rejected alternative, a constraint from outside
+the diff. Restating what the diff does in prose, even as a justification
+("so that X can now do Y"), is still restating the diff — skip it if the
+subject line and the code already make it clear.
 
 The commit type does not drive release versions; Changesets does. The two are
 independent.
