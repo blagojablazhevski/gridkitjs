@@ -16,7 +16,13 @@ export default function GridBody<Row>({
       {dataSource?.map((row, index) => (
         <tr key={index} className="grid-row">
           {columns?.map((column) => (
-            <td key={column.field} className="grid-cell">
+            <td
+              key={column.field}
+              className="grid-cell"
+              style={{
+                textAlign: column.alignment,
+              }}
+            >
               {accessDotted(row, column.field) as ReactNode}
             </td>
           ))}

@@ -1,4 +1,4 @@
-import type { ColumnDefinition, ColumnType } from "../types";
+import type { ColumnAlignment, ColumnDefinition, ColumnType } from "../types";
 
 /**
  * Narrows to a value worth drilling into. Mirrors the `LeafValue` union in
@@ -24,6 +24,11 @@ function getType(value: unknown): ColumnType {
   return "string";
 }
 
+function getAlignment(value: unknown): ColumnAlignment {
+  if (typeof value === "number") return "right";
+  return "left";
+}
+
 /**
  * Derives one column per field across `rows`, in the order each field is first
  * seen — so a key that only appears in a later row still gets a column,
@@ -45,7 +50,11 @@ export function defineColumnsFromRows<Row>(
       return;
     }
     seen.add(field);
-    columns.push({ field, type: getType(value) });
+    columns.push({
+      field,
+      type: getType(value),
+      alignment: getAlignment(value),
+    });
   }
 
   for (const row of rows) {

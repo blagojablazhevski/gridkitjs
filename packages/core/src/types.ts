@@ -46,6 +46,8 @@ export type ColumnType =
   | "currency"
   | "percent";
 
+export type ColumnAlignment = "left" | "center" | "right";
+
 /**
  * @typeParam Header - What a header renders to. This package is
  * framework-agnostic so it defaults to `string`; `@gridkit/react` binds it to
@@ -65,4 +67,9 @@ export interface ColumnDefinition<Row, Header = string> {
    * defaults to `string`;
    */
   type?: ColumnType;
+  /**
+   * Alignment of this column's cells. This package is framework-agnostic so it
+   * defaults to `left` (`right` for numbers);
+   */
+  alignment?: ColumnAlignment;
 }
