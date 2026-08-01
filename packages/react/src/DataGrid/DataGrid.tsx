@@ -1,5 +1,8 @@
-import type { ReactNode } from "react";
-import type { ColumnDefinition as CoreColumnDefinition } from "@gridkit/core";
+import { useMemo, type ReactNode } from "react";
+import {
+  defineColumnsFromRows,
+  type ColumnDefinition as CoreColumnDefinition,
+} from "@gridkit/core";
 import GridHeader from "./components/GridHeader";
 import GridBody from "./components/GridBody";
 
@@ -35,6 +38,13 @@ export function DataGridComponent<Row>({
   const hoverColumns = hoverable?.columns ?? true;
   const hoverCells = hoverable?.cells ?? true;
 
+  const resolvedColumns = useMemo(() => {
+    if (columns && columns.length !== 0) return columns;
+    if (dataSource && dataSource.length > 0)
+      return defineColumnsFromRows(dataSource);
+    return undefined;
+  }, [columns, dataSource]);
+
   return (
     <table
       className={[
@@ -47,8 +57,8 @@ export function DataGridComponent<Row>({
         .filter(Boolean)
         .join(" ")}
     >
-      <GridHeader<Row> columns={columns} />
-      <GridBody<Row> columns={columns} dataSource={dataSource} />
+      <GridHeader<Row> columns={resolvedColumns} />
+      <GridBody<Row> columns={resolvedColumns} dataSource={dataSource} />
     </table>
   );
 }
