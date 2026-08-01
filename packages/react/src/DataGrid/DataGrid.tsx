@@ -107,15 +107,21 @@ export function DataGridComponent<Row>({
    * cannot chase its own output. `"fixed"` is then simply the absence of it.
    */
   const resolved = useMemo(() => {
-    const widths = resolveColumnWidths(
-      definedColumns,
-      sizing,
-      columnSizeDefaults,
-    );
+    const widths = resolveColumnWidths(definedColumns, sizing, {
+      sizes: columnSizeDefaults,
+      resizable: resizableColumns,
+    });
     return resizeMode === "fit" && viewportWidth !== null
       ? fitColumnsToWidth(widths, viewportWidth, columnSizeDefaults)
       : widths;
-  }, [definedColumns, sizing, resizeMode, viewportWidth, columnSizeDefaults]);
+  }, [
+    definedColumns,
+    sizing,
+    resizeMode,
+    viewportWidth,
+    columnSizeDefaults,
+    resizableColumns,
+  ]);
 
   const resize = useColumnResize<Row>({
     tableRef,
@@ -147,11 +153,7 @@ export function DataGridComponent<Row>({
             <col key={entry.id} style={{ width: entry.width }} />
           ))}
         </colgroup>
-        <GridHeader<Row>
-          columns={resolved}
-          resizableColumns={resizableColumns}
-          resize={resize}
-        />
+        <GridHeader<Row> columns={resolved} resize={resize} />
         <GridBody<Row>
           columns={resolved}
           dataSource={dataSource}

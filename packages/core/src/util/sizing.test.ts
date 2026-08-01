@@ -91,7 +91,7 @@ describe("resolveColumnWidths", () => {
     const resolved = resolveColumnWidths<SampleRow, string>(
       [{ field: "Id" }, { field: "Name", width: 90 }],
       {},
-      { width: 60 },
+      { sizes: { width: 60 } },
     );
 
     expect(widthsOf(resolved)).toEqual([60, 90]);
@@ -117,6 +117,80 @@ describe("resolveColumnWidths", () => {
   test("returns nothing for no columns", () => {
     expect(resolveColumnWidths([], {})).toEqual([]);
     expect(totalColumnWidth([])).toBe(0);
+  });
+
+  test("resolves each column's label, eagerly or lazily", () => {
+    const columns: readonly ColumnDefinition<SampleRow>[] = [
+      { field: "Id", header: "Identifier" },
+      { field: "Name", header: () => "Full name" },
+      { field: "Status" },
+    ];
+
+    const resolved = resolveColumnWidths(columns, {});
+
+    expect(resolved.map((entry) => entry.label)).toEqual([
+      "Identifier",
+      "Full name",
+      "Status",
+    ]);
+  });
+
+  test("takes the column's own resizable over the grid default", () => {
+    const columns: readonly ColumnDefinition<SampleRow>[] = [
+      { field: "Id", resizable: false },
+      { field: "Name" },
+      { field: "Status", resizable: true },
+    ];
+
+    const enabled = resolveColumnWidths(columns, {}, { resizable: true });
+    const disabled = resolveColumnWidths(columns, {}, { resizable: false });
+
+    expect(enabled.map((entry) => entry.resizable)).toEqual([
+      false,
+      true,
+      true,
+    ]);
+    expect(disabled.map((entry) => entry.resizable)).toEqual([
+      false,
+      false,
+      true,
+    ]);
+  });
+
+  test("leaves columns unresizable when neither side says otherwise", () => {
+    const resolved = resolveColumnWidths(equalColumns, {});
+
+    expect(resolved.map((entry) => entry.resizable)).toEqual([
+      false,
+      false,
+      false,
+    ]);
+  });
+
+  test("aligns from the column's type, letting an explicit alignment win", () => {
+    const columns: readonly ColumnDefinition<SampleRow>[] = [
+      { field: "Id", type: "number" },
+      { field: "Name", type: "currency", alignment: "center" },
+      { field: "Status", type: "string" },
+    ];
+
+    const resolved = resolveColumnWidths(columns, {});
+
+    expect(resolved.map((entry) => entry.alignment)).toEqual([
+      "right",
+      "center",
+      "left",
+    ]);
+  });
+
+  test("aligns a column left when it states neither alignment nor type", () => {
+    const resolved = resolveColumnWidths(equalColumns, {});
+
+    expect(resolved.map((entry) => entry.alignment)).toEqual([
+      "left",
+      "left",
+      "left",
+    ]);
   });
 });
 
@@ -215,6 +289,31 @@ describe("fitColumnsToWidth", () => {
 
   test("returns nothing for no columns", () => {
     expect(fitColumnsToWidth([], 500)).toEqual([]);
+  });
+
+  test("carries everything but the width through untouched", () => {
+    const columns: readonly ColumnDefinition<SampleRow>[] = [
+      { field: "Id", width: 100, type: "number", header: "Identifier" },
+      { field: "Name", width: 100, resizable: false },
+    ];
+
+    const [id, name] = fitColumnsToWidth(
+      resolveColumnWidths(columns, {}, { resizable: true }),
+      600,
+    );
+
+    expect(id).toMatchObject({
+      label: "Identifier",
+      alignment: "right",
+      resizable: true,
+      width: 300,
+    });
+    expect(name).toMatchObject({
+      label: "Name",
+      alignment: "left",
+      resizable: false,
+      width: 300,
+    });
   });
 });
 

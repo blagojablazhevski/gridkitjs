@@ -2,11 +2,12 @@ import type {
   ColumnConstraints,
   ColumnDefinition,
   ColumnResizeSession,
+  ColumnResolveOptions,
   ColumnSizeDefaults,
   ColumnSizingState,
   ResolvedColumn,
 } from "../types";
-import { getColumnId } from "./grid";
+import { alignmentForType, getColumnId, resolveColumnLabel } from "./grid";
 
 /**
  * Applied to any column that does not size itself. The minimum is a width a
@@ -18,6 +19,9 @@ export const DEFAULT_COLUMN_SIZES: ColumnSizeDefaults = {
   minWidth: 40,
   maxWidth: Number.POSITIVE_INFINITY,
 };
+
+/** How far one arrow key press moves a column edge. */
+export const KEYBOARD_STEP = 10;
 
 function withDefaults(
   defaults?: Partial<ColumnSizeDefaults>,
@@ -49,8 +53,10 @@ export function clampColumnWidth(
 }
 
 /**
- * Pairs each column with the width it renders at, taking the first of the
- * sizing state, the column's own `width`, and the default — then clamping.
+ * Pairs each column with everything needed to render it — the width it sits
+ * at, the label its header shows, whether it may be resized and how its cells
+ * align. Widths take the first of the sizing state, the column's own `width`,
+ * and the default, then clamp.
  *
  * The sizing state winning means a user's drag outlives a re-render; a column
  * absent from it still tracks a `width` edited in the definition.
@@ -58,9 +64,9 @@ export function clampColumnWidth(
 export function resolveColumnWidths<Row, Header>(
   columns: readonly ColumnDefinition<Row, Header>[],
   sizing: ColumnSizingState,
-  defaults?: Partial<ColumnSizeDefaults>,
+  options?: ColumnResolveOptions,
 ): readonly ResolvedColumn<Row, Header>[] {
-  const resolved = withDefaults(defaults);
+  const resolved = withDefaults(options?.sizes);
 
   return columns.map((column) => {
     const id = getColumnId(column);
@@ -74,6 +80,9 @@ export function resolveColumnWidths<Row, Header>(
         stored ?? column.width ?? resolved.width,
         resolveColumnConstraints(column, resolved),
       ),
+      label: resolveColumnLabel(column),
+      resizable: column.resizable ?? options?.resizable ?? false,
+      alignment: column.alignment ?? alignmentForType(column.type ?? "string"),
     };
   });
 }

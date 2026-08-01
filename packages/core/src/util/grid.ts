@@ -24,9 +24,24 @@ function getType(value: unknown): ColumnType {
   return "string";
 }
 
+/**
+ * How a column of `type` aligns by default. Numeric types align right so that
+ * their digits line up by place value; everything else reads from the left.
+ */
+export function alignmentForType(type: ColumnType): ColumnAlignment {
+  switch (type) {
+    case "number":
+    case "decimal":
+    case "currency":
+    case "percent":
+      return "right";
+    default:
+      return "left";
+  }
+}
+
 function getAlignment(value: unknown): ColumnAlignment {
-  if (typeof value === "number") return "right";
-  return "left";
+  return alignmentForType(getType(value));
 }
 
 /**
@@ -85,6 +100,24 @@ export function getColumnId<Row>(
   column: ColumnDefinition<Row, unknown>,
 ): string {
   return column.id ?? column.field;
+}
+
+/**
+ * What a column's header shows: its own `header`, called first if it is a
+ * function, or else a label read off the field path — `"Application.Id"`
+ * reading as `"Application Id"`.
+ */
+export function resolveColumnLabel<Row, Header>(
+  column: ColumnDefinition<Row, Header>,
+): Header | string {
+  const { header } = column;
+  if (header === undefined) {
+    return column.field.split(".").join(" ");
+  }
+  // `Header` is open, so it could itself be a function type and the `typeof`
+  // check cannot narrow on its own. A header that is callable is the lazy
+  // form by definition — no adapter binds `Header` to a function.
+  return typeof header === "function" ? (header as () => Header)() : header;
 }
 
 /**

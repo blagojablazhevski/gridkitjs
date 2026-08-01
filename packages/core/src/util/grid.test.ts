@@ -1,7 +1,12 @@
 import { describe, expect, test } from "vitest";
 
 import type { ColumnDefinition, FieldPath } from "../types";
-import { accessDotted, defineColumnsFromRows } from "./grid";
+import {
+  accessDotted,
+  alignmentForType,
+  defineColumnsFromRows,
+  resolveColumnLabel,
+} from "./grid";
 
 interface Application {
   Id: number;
@@ -142,6 +147,60 @@ describe("ColumnDefinition", () => {
     const [, lazy] = columns;
 
     expect(typeof lazy?.header).toBe("function");
+  });
+});
+
+describe("alignmentForType", () => {
+  test("aligns every numeric type right", () => {
+    expect(alignmentForType("number")).toBe("right");
+    expect(alignmentForType("decimal")).toBe("right");
+    expect(alignmentForType("currency")).toBe("right");
+    expect(alignmentForType("percent")).toBe("right");
+  });
+
+  test("aligns everything else left", () => {
+    expect(alignmentForType("string")).toBe("left");
+    expect(alignmentForType("boolean")).toBe("left");
+    expect(alignmentForType("date")).toBe("left");
+    expect(alignmentForType("time")).toBe("left");
+    expect(alignmentForType("dateTime")).toBe("left");
+  });
+
+  test("aligns a number derived from data right, as an inferred column does", () => {
+    const [id, name] = defineColumnsFromRows([{ Id: 1, Name: "a" }]);
+
+    expect(id?.alignment).toBe("right");
+    expect(name?.alignment).toBe("left");
+  });
+});
+
+describe("resolveColumnLabel", () => {
+  test("takes the header as given", () => {
+    expect(
+      resolveColumnLabel<SampleRow, string>({ field: "Id", header: "#" }),
+    ).toBe("#");
+  });
+
+  test("calls a lazy header", () => {
+    expect(
+      resolveColumnLabel<SampleRow, string>({
+        field: "Id",
+        header: () => "Identifier",
+      }),
+    ).toBe("Identifier");
+  });
+
+  test("reads a label off the field path when no header is set", () => {
+    expect(resolveColumnLabel<SampleRow, string>({ field: "Id" })).toBe("Id");
+    expect(
+      resolveColumnLabel<SampleRow, string>({ field: "Application.Id" }),
+    ).toBe("Application Id");
+  });
+
+  test("keeps an empty header rather than falling back to the field", () => {
+    expect(
+      resolveColumnLabel<SampleRow, string>({ field: "Id", header: "" }),
+    ).toBe("");
   });
 });
 

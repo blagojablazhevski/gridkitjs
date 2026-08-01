@@ -1,15 +1,14 @@
+import { KEYBOARD_STEP } from "@gridkit/core";
 import type { ResolvedColumn } from "../DataGrid";
-import { KEYBOARD_STEP, type ColumnResizeApi } from "../useColumnResize";
+import type { ColumnResizeApi } from "../useColumnResize";
 
 interface GridHeaderProps<Row> {
   columns: readonly ResolvedColumn<Row>[];
-  resizableColumns: boolean;
   resize: ColumnResizeApi<Row>;
 }
 
 export default function GridHeader<Row>({
   columns,
-  resizableColumns,
   resize,
 }: GridHeaderProps<Row>) {
   return (
@@ -25,12 +24,8 @@ export default function GridHeader<Row>({
               data-gridkit-column={entry.id}
               className={resizing ? "header-cell is-resizing" : "header-cell"}
             >
-              {column.header
-                ? typeof column.header === "function"
-                  ? column.header()
-                  : column.header
-                : column.field.split(".").join(" ")}
-              {(column.resizable ?? resizableColumns) && (
+              {entry.label}
+              {entry.resizable && (
                 <span
                   className="header-resize-handle"
                   role="separator"

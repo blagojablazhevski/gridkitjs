@@ -6,14 +6,22 @@ export type {
   ColumnConstraints,
   ColumnResizeEvent,
   ColumnResizeSession,
+  ColumnResolveOptions,
   ColumnSizeDefaults,
   ColumnSizingState,
   ColumnType,
   ResolvedColumn,
 } from "./types";
-export { defineColumnsFromRows, accessDotted, getColumnId } from "./util/grid";
+export {
+  accessDotted,
+  alignmentForType,
+  defineColumnsFromRows,
+  getColumnId,
+  resolveColumnLabel,
+} from "./util/grid";
 export {
   DEFAULT_COLUMN_SIZES,
+  KEYBOARD_STEP,
   applyColumnResize,
   beginColumnResize,
   clampColumnWidth,
