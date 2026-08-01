@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/gridkit-header.svg" alt="GridKit" width="80%">
+  <img src="assets/gridkit-header.svg" alt="GridKit" width="50%">
 </p>
 
 # GridKit
