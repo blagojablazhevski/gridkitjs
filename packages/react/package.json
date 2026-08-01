@@ -1,7 +1,23 @@
 {
   "name": "@gridkitjs/react",
   "version": "0.0.1",
+  "description": "React data-grid components built on @gridkitjs/core.",
   "license": "MIT",
+  "author": "Blagoja Blazhevski",
+  "homepage": "https://github.com/blagojablazhevski/gridkit#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blagojablazhevski/gridkit.git",
+    "directory": "packages/react"
+  },
+  "keywords": [
+    "datagrid",
+    "grid",
+    "table",
+    "react",
+    "headless",
+    "typescript"
+  ],
   "type": "module",
   "engines": {
     "node": ">=22"
@@ -23,7 +39,8 @@
   },
   "files": [
     "dist",
-    "LICENSE"
+    "LICENSE",
+    "README.md"
   ],
   "scripts": {
     "build": "tsup",

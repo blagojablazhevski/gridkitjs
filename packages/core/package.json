@@ -1,7 +1,23 @@
 {
   "name": "@gridkitjs/core",
   "version": "0.0.1",
+  "description": "Framework-agnostic data-grid logic: column resolution, alignment and sizing.",
   "license": "MIT",
+  "author": "Blagoja Blazhevski",
+  "homepage": "https://github.com/blagojablazhevski/gridkit#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blagojablazhevski/gridkit.git",
+    "directory": "packages/core"
+  },
+  "keywords": [
+    "datagrid",
+    "grid",
+    "table",
+    "headless",
+    "typescript",
+    "framework-agnostic"
+  ],
   "type": "module",
   "engines": {
     "node": ">=22"
@@ -23,7 +39,8 @@
   },
   "files": [
     "dist",
-    "LICENSE"
+    "LICENSE",
+    "README.md"
   ],
   "scripts": {
     "build": "tsup",
