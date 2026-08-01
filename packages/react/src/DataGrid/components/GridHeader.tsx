@@ -1,4 +1,4 @@
-import { KEYBOARD_STEP } from "@gridkit/core";
+import { KEYBOARD_STEP } from "@gridkitjs/core";
 import type { ResolvedColumn } from "../DataGrid";
 import type { ColumnResizeApi } from "../useColumnResize";
 

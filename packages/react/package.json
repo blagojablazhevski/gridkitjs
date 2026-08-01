@@ -1,5 +1,5 @@
 {
-  "name": "@gridkit/react",
+  "name": "@gridkitjs/react",
   "version": "0.0.1",
   "license": "MIT",
   "type": "module",
@@ -36,7 +36,7 @@
     "react-dom": "^19.0.0"
   },
   "dependencies": {
-    "@gridkit/core": "workspace:*"
+    "@gridkitjs/core": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "^19.2.18",

@@ -1,31 +1,31 @@
 <p align="center">
-  <img src="assets/gridkit-header.svg" alt="GridKit" width="100%">
+  <img src="assets/gridkit-header.svg" alt="GridKit" width="80%">
 </p>
 
 # GridKit
 
 Headless data-grid toolkit. pnpm monorepo, ESM-only, TypeScript 6.
 
-Grid logic lives in `@gridkit/core` as plain TypeScript, so it is testable
-without a DOM and reusable from a future Vue/Svelte adapter. `@gridkit/react`
+Grid logic lives in `@gridkitjs/core` as plain TypeScript, so it is testable
+without a DOM and reusable from a future Vue/Svelte adapter. `@gridkitjs/react`
 binds that logic to React components.
 
 ## Packages
 
-| Package                   | What it is                                                            |
-| ------------------------- | --------------------------------------------------------------------- |
-| `@gridkit/core`           | Framework-agnostic grid logic — column resolution, alignment, sizing. |
-| `@gridkit/react`          | React components consuming `core`, styled with Tailwind utilities.    |
-| `@gridkit/theme-default`  | Plain CSS for consumers not using Tailwind. Private, unpublished.     |
-| `@gridkit/theme-tailwind` | Tailwind theme layer. Private, unpublished.                           |
+| Package                     | What it is                                                            |
+| --------------------------- | --------------------------------------------------------------------- |
+| `@gridkitjs/core`           | Framework-agnostic grid logic — column resolution, alignment, sizing. |
+| `@gridkitjs/react`          | React components consuming `core`, styled with Tailwind utilities.    |
+| `@gridkitjs/theme-default`  | Plain CSS for consumers not using Tailwind. Private, unpublished.     |
+| `@gridkitjs/theme-tailwind` | Tailwind theme layer. Private, unpublished.                           |
 
 `apps/playground` is a Vite app used to develop against. Private, never published.
 
 ## Usage
 
 ```tsx
-import { defineColumnsFromRows } from "@gridkit/core";
-import { DataGridComponent, type ColumnDefinition } from "@gridkit/react";
+import { defineColumnsFromRows } from "@gridkitjs/core";
+import { DataGridComponent, type ColumnDefinition } from "@gridkitjs/react";
 
 const rows = [
   { Id: 1, Application: { Id: 9, Name: "Portal" }, Cost: 1250.5 },
@@ -70,7 +70,7 @@ Vitest. Test files sit next to the code as `*.test.ts` in `src/`.
 
 ```bash
 pnpm test                          # all packages
-pnpm --filter @gridkit/core test   # one package
+pnpm --filter @gridkitjs/core test   # one package
 ```
 
 Prefer testing logic in `core`, where no DOM is required.

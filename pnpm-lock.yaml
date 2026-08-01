@@ -35,13 +35,13 @@ importers:
 
   apps/playground:
     dependencies:
-      '@gridkit/core':
+      '@gridkitjs/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@gridkit/react':
+      '@gridkitjs/react':
         specifier: workspace:*
         version: link:../../packages/react
-      '@gridkit/theme-tailwind':
+      '@gridkitjs/theme-tailwind':
         specifier: workspace:*
         version: link:../../packages/theme-tailwind
       react:
@@ -90,7 +90,7 @@ importers:
 
   packages/react:
     dependencies:
-      '@gridkit/core':
+      '@gridkitjs/core':
         specifier: workspace:*
         version: link:../core
     devDependencies:
@@ -120,7 +120,7 @@ importers:
 
   packages/theme-tailwind:
     dependencies:
-      '@gridkit/react':
+      '@gridkitjs/react':
         specifier: workspace:*
         version: link:../react
       tailwindcss:

@@ -1,4 +1,4 @@
-import { accessDotted } from "@gridkit/core";
+import { accessDotted } from "@gridkitjs/core";
 import { type ReactNode } from "react";
 import type { ResolvedColumn } from "../DataGrid";
 

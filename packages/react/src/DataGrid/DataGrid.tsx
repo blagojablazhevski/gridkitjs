@@ -9,14 +9,14 @@ import {
   type ColumnResizeEvent,
   type ColumnSizeDefaults,
   type ColumnSizingState,
-} from "@gridkit/core";
+} from "@gridkitjs/core";
 import GridHeader from "./components/GridHeader";
 import GridBody from "./components/GridBody";
 import useColumnResize from "./useColumnResize";
 import useElementWidth from "./useElementWidth";
 
 /**
- * A column whose header may render arbitrary React content. @gridkit/core
+ * A column whose header may render arbitrary React content. @gridkitjs/core
  * stays framework-agnostic and so leaves that output type open; this is the
  * binding React consumers want, and the one they should import.
  */

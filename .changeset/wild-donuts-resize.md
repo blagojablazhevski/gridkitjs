@@ -1,13 +1,13 @@
 ---
-"@gridkit/core": minor
-"@gridkit/react": minor
+"@gridkitjs/core": minor
+"@gridkitjs/react": minor
 ---
 
 Size, resize and auto-fit columns
 
 `ColumnDefinition` gains `width`, `minWidth`, `maxWidth` and `resizable`, plus an
 optional `id` that state is keyed by and that defaults to `field`. Every width
-calculation lives in `@gridkit/core` — `resolveColumnWidths` applies the
+calculation lives in `@gridkitjs/core` — `resolveColumnWidths` applies the
 precedence (sizing state, then the column, then the default) and clamps;
 `beginColumnResize`/`applyColumnResize` turn a pointer position into a width;
 `fitColumnsToWidth` distributes a container's width across columns. A future

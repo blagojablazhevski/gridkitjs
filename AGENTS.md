@@ -4,12 +4,12 @@ Headless data-grid toolkit. pnpm monorepo, ESM-only, TypeScript 6.
 
 ## Structure
 
-| Package                             | What belongs in it                                                                                  |
-| ----------------------------------- | --------------------------------------------------------------------------------------------------- |
-| `packages/core` (`@gridkit/core`)   | Framework-agnostic grid logic — sorting, filtering, paging. Plain TypeScript. **No React, no CSS.** |
-| `packages/react` (`@gridkit/react`) | React components, styled with Tailwind utility classes. Consumes `core`.                            |
-| `packages/theme-default`            | Plain CSS for consumers not using Tailwind. Private, unpublished.                                   |
-| `apps/playground`                   | Vite app used to develop against. Private, never published.                                         |
+| Package                               | What belongs in it                                                                                  |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `packages/core` (`@gridkitjs/core`)   | Framework-agnostic grid logic — sorting, filtering, paging. Plain TypeScript. **No React, no CSS.** |
+| `packages/react` (`@gridkitjs/react`) | React components, styled with Tailwind utility classes. Consumes `core`.                            |
+| `packages/theme-default`              | Plain CSS for consumers not using Tailwind. Private, unpublished.                                   |
+| `apps/playground`                     | Vite app used to develop against. Private, never published.                                         |
 
 The split is the point: logic lives in `core` so it is testable without a DOM
 and reusable from a future Vue/Svelte adapter. If a feature can be written
@@ -40,7 +40,7 @@ Vitest. Test files sit next to the code as `*.test.ts` in `src/`.
 
 ```bash
 pnpm test                          # all packages
-pnpm --filter @gridkit/core test   # one package
+pnpm --filter @gridkitjs/core test   # one package
 ```
 
 Both packages currently pass `--passWithNoTests`; drop that flag once a package
@@ -65,6 +65,23 @@ pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build
 - **ESM only.** No CommonJS output.
 - **Versioning** — Changesets. Run `pnpm changeset` in any change that affects
   published package behaviour.
+
+### Releasing
+
+Two modes, both from a clean tree with `npm login` already done.
+
+```bash
+pnpm release:dev   # snapshot: 0.0.0-dev-<timestamp>, published under the `dev` tag
+pnpm release       # stable: consumes changesets, publishes to `latest`
+```
+
+`release:dev` is the one to reach for while iterating. It cuts a throwaway
+version off the `latest` tag, so `pnpm add @gridkitjs/core` keeps resolving to
+the last stable release and only `@dev` sees the snapshot.
+
+It rewrites versions and consumes changeset files as a side effect, so **do not
+commit the tree it leaves behind** — `git checkout .` after publishing. The
+changesets have to survive to drive the next stable release.
 
 ### Commits
 

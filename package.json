@@ -17,6 +17,7 @@
     "changeset": "changeset",
     "version-packages": "changeset version",
     "release": "pnpm build && changeset publish",
+    "release:dev": "pnpm build && changeset version --snapshot dev && changeset publish --tag dev --no-git-tag; git checkout -- \"*/*/package.json\" .changeset && git clean -f \"*/*/CHANGELOG.md\"",
     "prepare": "husky"
   },
   "lint-staged": {

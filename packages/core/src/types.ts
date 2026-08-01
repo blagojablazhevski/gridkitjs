@@ -50,7 +50,7 @@ export type ColumnAlignment = "left" | "center" | "right";
 
 /**
  * @typeParam Header - What a header renders to. This package is
- * framework-agnostic so it defaults to `string`; `@gridkit/react` binds it to
+ * framework-agnostic so it defaults to `string`; `@gridkitjs/react` binds it to
  * `ReactNode` so a header callback can return JSX.
  */
 export interface ColumnDefinition<Row, Header = string> {

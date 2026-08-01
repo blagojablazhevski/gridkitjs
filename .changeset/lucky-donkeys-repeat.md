@@ -1,6 +1,6 @@
 ---
-"@gridkit/core": minor
-"@gridkit/react": minor
+"@gridkitjs/core": minor
+"@gridkitjs/react": minor
 ---
 
 Address nested fields with `"Parent.Child"` paths, and derive columns from data
@@ -11,6 +11,6 @@ cannot see is never a hard error. `defineColumnsFromRows` derives a column per
 field across a set of rows, in first-seen order and without duplicates.
 
 `ColumnDefinition` takes a second type parameter for what a header renders to.
-It defaults to `string` in `@gridkit/core`, which stays framework-agnostic;
-`@gridkit/react` exports a `ColumnDefinition<Row>` alias bound to `ReactNode`,
+It defaults to `string` in `@gridkitjs/core`, which stays framework-agnostic;
+`@gridkitjs/react` exports a `ColumnDefinition<Row>` alias bound to `ReactNode`,
 so a header callback can return JSX. This replaces the untyped `Function`.

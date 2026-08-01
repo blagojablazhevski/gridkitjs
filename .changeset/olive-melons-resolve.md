@@ -1,6 +1,6 @@
 ---
-"@gridkit/core": minor
-"@gridkit/react": minor
+"@gridkitjs/core": minor
+"@gridkitjs/react": minor
 ---
 
 Resolve a column's label, resizability and alignment in core

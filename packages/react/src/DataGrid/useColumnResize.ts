@@ -14,7 +14,7 @@ import {
   type ColumnResizeEvent,
   type ColumnSizeDefaults,
   type ColumnSizingState,
-} from "@gridkit/core";
+} from "@gridkitjs/core";
 import type { ResolvedColumn } from "./DataGrid";
 import measureColumnContent from "./measureColumnContent";
 
@@ -39,7 +39,7 @@ export interface ColumnResizeApi<Row> {
 
 /**
  * Turns pointer and keyboard input into column widths. Every width it produces
- * comes from `@gridkit/core`; this hook only supplies the coordinates.
+ * comes from `@gridkitjs/core`; this hook only supplies the coordinates.
  */
 export default function useColumnResize<Row>({
   tableRef,

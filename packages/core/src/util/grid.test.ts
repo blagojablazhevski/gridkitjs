@@ -131,7 +131,7 @@ describe("FieldPath", () => {
 });
 
 describe("ColumnDefinition", () => {
-  test("widens to a richer header type, as @gridkit/react relies on", () => {
+  test("widens to a richer header type, as @gridkitjs/react relies on", () => {
     // Stands in for ReactNode so this package stays framework-agnostic.
     const widened: readonly ColumnDefinition<SampleRow, string | object>[] =
       defineColumnsFromRows(sampleRows);
