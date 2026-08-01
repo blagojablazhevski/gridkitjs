@@ -78,6 +78,16 @@ export function defineColumnsFromRows<Row>(
 }
 
 /**
+ * The key state about a column is stored under, and the key it renders with.
+ * Every such lookup goes through here so the two can never disagree.
+ */
+export function getColumnId<Row>(
+  column: ColumnDefinition<Row, unknown>,
+): string {
+  return column.id ?? column.field;
+}
+
+/**
  * Accesses a value at a dotted path, e.g. `foo.bar.baz`.
  *
  * @param obj The object to access
