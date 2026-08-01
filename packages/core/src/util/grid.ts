@@ -1,4 +1,4 @@
-import type { ColumnDefinition } from "../types";
+import type { ColumnDefinition, ColumnType } from "../types";
 
 /**
  * Narrows to a value worth drilling into. Mirrors the `LeafValue` union in
@@ -12,6 +12,16 @@ function isNested(value: unknown): value is Record<string, unknown> {
     !Array.isArray(value) &&
     !(value instanceof Date)
   );
+}
+
+function getType(value: unknown): ColumnType {
+  if (value instanceof Date) return "dateTime";
+  if (typeof value === "string") return "string";
+  if (typeof value === "number") return "number";
+  if (typeof value === "boolean") return "boolean";
+  if (typeof value === "bigint") return "number";
+  if (typeof value === "symbol") return "string";
+  return "string";
 }
 
 /**
@@ -30,12 +40,12 @@ export function defineColumnsFromRows<Row>(
   const columns: ColumnDefinition<Row>[] = [];
   const seen = new Set<string>();
 
-  function add(field: string): void {
+  function add(field: string, value: unknown): void {
     if (seen.has(field)) {
       return;
     }
     seen.add(field);
-    columns.push({ field });
+    columns.push({ field, type: getType(value) });
   }
 
   for (const row of rows) {
@@ -44,12 +54,12 @@ export function defineColumnsFromRows<Row>(
     }
     for (const [key, value] of Object.entries(row)) {
       if (!isNested(value)) {
-        add(key);
+        add(key, value);
         continue;
       }
       for (const [nestedKey, nestedValue] of Object.entries(value)) {
         if (!isNested(nestedValue)) {
-          add(`${key}.${nestedKey}`);
+          add(`${key}.${nestedKey}`, nestedValue);
         }
       }
     }

@@ -32,6 +32,21 @@ export type FieldPath<Row> = {
 }[keyof Row & string];
 
 /**
+ * The value type of a column's cells. This package is framework-agnostic so it
+ * defaults to `string`;
+ */
+export type ColumnType =
+  | "dateTime"
+  | "date"
+  | "time"
+  | "number"
+  | "string"
+  | "boolean"
+  | "decimal"
+  | "currency"
+  | "percent";
+
+/**
  * @typeParam Header - What a header renders to. This package is
  * framework-agnostic so it defaults to `string`; `@gridkit/react` binds it to
  * `ReactNode` so a header callback can return JSX.
@@ -45,4 +60,9 @@ export interface ColumnDefinition<Row, Header = string> {
   field: FieldPath<Row> | (string & {});
   /** Header content, or a function returning it at render time. */
   header?: Header | (() => Header) | undefined;
+  /**
+   * The value type of this column's cells. This package is framework-agnostic so it
+   * defaults to `string`;
+   */
+  type?: ColumnType;
 }
