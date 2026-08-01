@@ -111,7 +111,21 @@ export interface ColumnConstraints {
   maxWidth: number;
 }
 
-/** A column paired with the width it renders at. */
+/**
+ * Grid-level defaults a column falls back to when it does not set its own.
+ * Sizes are grouped so the rest of the grid's defaults have somewhere to go.
+ */
+export interface ColumnResolveOptions {
+  sizes?: Partial<ColumnSizeDefaults> | undefined;
+  /** Whether columns are resizable, unless a column says otherwise. */
+  resizable?: boolean | undefined;
+}
+
+/**
+ * A column paired with everything it takes to render it. Each field is a
+ * decision made once here rather than in each adapter, so a second framework
+ * binding renders identically without repeating the logic.
+ */
 export interface ResolvedColumn<Row, Header = string> {
   column: ColumnDefinition<Row, Header>;
   id: string;
@@ -122,6 +136,16 @@ export interface ResolvedColumn<Row, Header = string> {
    * columns alone so that resizing one does not undo itself.
    */
   sized: boolean;
+  /**
+   * What the header shows: the column's own `header`, or a label read off the
+   * field path. `string` is in the union because that fallback is text
+   * whatever `Header` is bound to.
+   */
+  label: Header | string;
+  /** Whether this column can be resized, after the grid-level default. */
+  resizable: boolean;
+  /** How this column's cells align, after falling back to its type. */
+  alignment: ColumnAlignment;
 }
 
 /**

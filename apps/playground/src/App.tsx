@@ -7,8 +7,13 @@ import {
 } from "@gridkit/react";
 
 const rows = [
-  { Id: 1, Tags: ["ops"], Application: { Id: 9, Name: "Portal" } },
-  { Id: 2, Status: "ok", Application: { Id: 4, Name: "Admin" } },
+  {
+    Id: 1,
+    Tags: ["ops"],
+    Application: { Id: 9, Name: "Portal" },
+    Cost: 1250.5,
+  },
+  { Id: 2, Status: "ok", Application: { Id: 4, Name: "Admin" }, Cost: 87.25 },
 ];
 
 type Row = (typeof rows)[number];
@@ -16,6 +21,8 @@ type Row = (typeof rows)[number];
 // Assignable to the ReactNode-bound alias despite defaulting to `string`.
 const columns: readonly ColumnDefinition<Row>[] = [
   ...defineColumnsFromRows(rows),
+  // Declared rather than inferred, so its alignment comes from `type` alone.
+  { field: "Cost", id: "Cost.currency", type: "currency", header: "Cost" },
 ];
 
 const modes: readonly { value: ResizeMode; description: string }[] = [

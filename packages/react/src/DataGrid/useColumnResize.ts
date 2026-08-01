@@ -18,9 +18,6 @@ import {
 import type { ResolvedColumn } from "./DataGrid";
 import measureColumnContent from "./measureColumnContent";
 
-/** How far one arrow key press moves a column edge. */
-export const KEYBOARD_STEP = 10;
-
 interface UseColumnResizeOptions {
   tableRef: RefObject<HTMLTableElement | null>;
   sizing: ColumnSizingState;
