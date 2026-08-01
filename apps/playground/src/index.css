@@ -1,8 +1,2 @@
 @import "tailwindcss";
-/*
- * @gridkitjs/react is symlinked in through node_modules, and Tailwind does not
- * scan there by default. Without this its utility classes would never be
- * generated and the grid would render unstyled.
- */
 @import "@gridkitjs/theme-tailwind/styles.css";
-@source "../../../packages/react/src";

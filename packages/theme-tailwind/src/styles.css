@@ -3,8 +3,6 @@
  *
  */
 
-@source "../../react/dist/";
-
 /*
  * Tailwind's `dark:` variant follows the OS preference by default. Bind it to
  * a `.dark` class instead so consumers can drive the theme themselves.

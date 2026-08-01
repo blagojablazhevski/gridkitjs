@@ -1,15 +1,32 @@
 {
   "name": "@gridkitjs/theme-tailwind",
   "version": "0.0.1",
-  "private": true,
-  "files": [
-    "src"
+  "description": "Tailwind v4 theme for GridKit — palette tokens, dark mode and grid styles.",
+  "license": "MIT",
+  "author": "Blagoja Blazhevski",
+  "homepage": "https://github.com/blagojablazhevski/gridkit#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blagojablazhevski/gridkit.git",
+    "directory": "packages/theme-tailwind"
+  },
+  "keywords": [
+    "gridkit",
+    "datagrid",
+    "tailwind",
+    "tailwindcss",
+    "theme",
+    "css"
   ],
   "exports": {
     "./styles.css": "./src/styles.css"
   },
+  "files": [
+    "src",
+    "LICENSE",
+    "README.md"
+  ],
   "peerDependencies": {
-    "@gridkitjs/react": "workspace:*",
     "tailwindcss": "^4.3.3"
   }
 }
