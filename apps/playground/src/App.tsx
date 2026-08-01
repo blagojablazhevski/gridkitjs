@@ -20,7 +20,11 @@ export default function App() {
       <p className="mt-2 text-sm text-gray-600">
         Import from <code>@gridkit/react</code> and render it here.
       </p>
-      <DataGridComponent columns={columns} dataSource={rows} />
+      <DataGridComponent
+        columns={columns}
+        dataSource={rows}
+        borders="horizontal"
+      />
     </main>
   );
 }

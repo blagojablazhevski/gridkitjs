@@ -21,6 +21,7 @@
   --gridkit-surface: oklch(1 0 0);
   --gridkit-surface-muted: oklch(0.97 0.003 250);
   --gridkit-line: oklch(0.92 0.005 250);
+  --gridkit-hover-line: oklch(0.65 0.09 255);
   --gridkit-fg: oklch(0.21 0.01 250);
   --gridkit-fg-muted: oklch(0.55 0.015 250);
   --gridkit-accent: oklch(0.6 0.17 255);
@@ -32,6 +33,7 @@
   --gridkit-surface: oklch(0.21 0.01 250);
   --gridkit-surface-muted: oklch(0.26 0.012 250);
   --gridkit-line: oklch(0.33 0.014 250);
+  --gridkit-hover-line: oklch(0.75 0.09 255);
   --gridkit-fg: oklch(0.97 0.003 250);
   --gridkit-fg-muted: oklch(0.7 0.015 250);
   --gridkit-accent: oklch(0.7 0.15 255);
@@ -57,23 +59,64 @@
 /*
  * Grid styles.
  */
-.gridkit-data-grid {
-  border-collapse: collapse;
-  width: 100%;
-}
 
-.gridkit-data-grid .grid-header {
-  background-color: var(--gridkit-surface);
-}
+@layer base {
+  .gridkit-data-grid {
+    border-collapse: collapse;
+    width: 100%;
+  }
 
-.gridkit-data-grid .grid-cell {
-  border-bottom: 1px solid var(--gridkit-line);
-}
+  .gridkit-data-grid .grid-header {
+    background-color: var(--gridkit-surface);
+  }
 
-.gridkit-data-grid .grid-cell {
-  padding: 0.5rem;
-}
+  .gridkit-data-grid .grid-header .header-cell {
+    padding: 0.5rem;
+  }
 
-.gridkit-data-grid .grid-row:hover {
-  background-color: var(--gridkit-surface-muted);
+  .gridkit-data-grid:not(.no-hover-columns) .grid-header .header-cell:hover {
+    background-color: var(--gridkit-surface-muted);
+  }
+
+  .gridkit-data-grid .grid-cell {
+    padding: 0.5rem;
+  }
+
+  .gridkit-data-grid:not(.no-hover-cells) .grid-cell:hover {
+    /* border: 1px solid var(--gridkit-line); */
+    outline: 1px solid var(--gridkit-hover-line);
+    background-color: var(--gridkit-surface-muted);
+  }
+
+  .gridkit-data-grid:not(.no-hover-rows) .grid-row:hover {
+    background-color: var(--gridkit-surface-muted);
+  }
+
+  /* Horizontal borders */
+  .gridkit-data-grid.borders-horizontal .grid-header .header-cell,
+  .gridkit-data-grid.borders-horizontal .grid-cell {
+    border-bottom: 1px solid var(--gridkit-line);
+  }
+
+  /* Vertical borders */
+  .gridkit-data-grid.borders-vertical .grid-header .header-cell,
+  .gridkit-data-grid.borders-vertical .grid-cell {
+    border-right: 1px solid var(--gridkit-line);
+  }
+
+  .gridkit-data-grid.borders-vertical .grid-header .header-cell:last-child,
+  .gridkit-data-grid.borders-vertical .grid-cell:last-child {
+    border-right: none;
+  }
+
+  /* Borders on all sides */
+  .gridkit-data-grid.borders-all .grid-header .header-cell,
+  .gridkit-data-grid.borders-all .grid-cell {
+    border: 1px solid var(--gridkit-line);
+  }
+
+  .gridkit-data-grid.borders-all .grid-header .header-cell:last-child,
+  .gridkit-data-grid.borders-all .grid-cell:last-child {
+    border-right: none;
+  }
 }

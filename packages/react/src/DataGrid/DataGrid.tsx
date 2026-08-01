@@ -1,8 +1,7 @@
 import type { ReactNode } from "react";
-import {
-  accessDotted,
-  type ColumnDefinition as CoreColumnDefinition,
-} from "@gridkit/core";
+import type { ColumnDefinition as CoreColumnDefinition } from "@gridkit/core";
+import GridHeader from "./components/GridHeader";
+import GridBody from "./components/GridBody";
 
 /**
  * A column whose header may render arbitrary React content. @gridkit/core
@@ -11,41 +10,45 @@ import {
  */
 export type ColumnDefinition<Row> = CoreColumnDefinition<Row, ReactNode>;
 
+export type Borders = "horizontal" | "vertical" | "all" | "none";
+
+export interface HoverableConfig {
+  rows?: boolean;
+  columns?: boolean;
+  cells?: boolean;
+}
+
 export interface DataGridProps<Row> {
-  columns?: readonly ColumnDefinition<Row>[];
-  dataSource?: readonly Row[];
+  columns?: readonly ColumnDefinition<Row>[] | undefined;
+  dataSource?: readonly Row[] | undefined;
+  borders?: Borders | undefined;
+  hoverable?: HoverableConfig | undefined;
 }
 
 export function DataGridComponent<Row>({
   dataSource,
   columns,
+  borders,
+  hoverable,
 }: DataGridProps<Row>) {
+  const hoverRows = hoverable?.rows ?? true;
+  const hoverColumns = hoverable?.columns ?? true;
+  const hoverCells = hoverable?.cells ?? true;
+
   return (
-    <table className="gridkit-data-grid">
-      <thead>
-        <tr className="grid-header">
-          {columns?.map((column) => (
-            <th key={column.field} className="header-cell">
-              {column.header
-                ? typeof column.header === "function"
-                  ? column.header()
-                  : column.header
-                : column.field.split(".").join(" ")}
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody className="grid-body">
-        {dataSource?.map((row, index) => (
-          <tr key={index} className="grid-row">
-            {columns?.map((column) => (
-              <td key={column.field} className="grid-cell">
-                {accessDotted(row, column.field) as ReactNode}
-              </td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
+    <table
+      className={[
+        "gridkit-data-grid",
+        borders ? `borders-${borders}` : "",
+        hoverRows ? "" : "no-hover-rows",
+        hoverColumns ? "" : "no-hover-columns",
+        hoverCells ? "" : "no-hover-cells",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
+      <GridHeader<Row> columns={columns} />
+      <GridBody<Row> columns={columns} dataSource={dataSource} />
     </table>
   );
 }
