@@ -3,4 +3,12 @@ export {
   DataGridComponent,
   type ColumnDefinition,
   type DataGridProps,
+  type ResizeMode,
+  type ResolvedColumn,
 } from "./DataGrid/DataGrid";
+// Re-exported so a consumer wiring up resize needs one import, not two.
+export type {
+  ColumnResizeEvent,
+  ColumnSizeDefaults,
+  ColumnSizingState,
+} from "@gridkit/core";
