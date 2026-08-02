@@ -95,12 +95,19 @@
    * `text-overflow: ellipsis` only matters once `overflow` stops being
    * `visible`. Fixed layout still holds the column's width; only its height
    * stops being one line's worth.
+   *
+   * `white-space: normal` alone only breaks at spaces — a single word longer
+   * than the column (a long identifier, a URL) has nowhere to break and
+   * overflows the fixed width instead, now that `overflow: visible` no longer
+   * clips it. `overflow-wrap: anywhere` lets it break mid-word as a last
+   * resort, after normal word breaks are exhausted.
    */
   .gridkit-data-grid .header-cell.is-wrapped,
   .gridkit-data-grid .grid-cell.is-wrapped {
     overflow: visible;
     text-overflow: clip;
     white-space: normal;
+    overflow-wrap: anywhere;
   }
 
   .gridkit-data-grid .grid-header {
