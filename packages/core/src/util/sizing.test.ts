@@ -254,8 +254,15 @@ describe("fitColumnsToWidth", () => {
     expect(widths).toEqual([134, 134, 133]);
   });
 
-  test("leaves the columns alone when they already exceed the width", () => {
-    expect(fit(equalColumns, {}, 200)).toEqual([100, 100, 100]);
+  test("shrinks columns proportionally when they exceed the width", () => {
+    expect(fit(equalColumns, {}, 210)).toEqual([70, 70, 70]);
+  });
+
+  test("fills the width exactly when shrinking and the share does not divide evenly", () => {
+    const widths = fit(equalColumns, {}, 200);
+
+    expect(widths.reduce((total, width) => total + width, 0)).toBe(200);
+    expect(widths).toEqual([66, 67, 67]);
   });
 
   test("redistributes what a column clamped at its maximum could not take", () => {
@@ -266,6 +273,42 @@ describe("fitColumnsToWidth", () => {
     ];
 
     expect(fit(columns, {}, 600)).toEqual([240, 120, 240]);
+  });
+
+  test("stops shrinking a column at its minimum and redistributes the rest", () => {
+    const columns: readonly ColumnDefinition<SampleRow>[] = [
+      { field: "Id", width: 100 },
+      { field: "Name", width: 100, minWidth: 90 },
+      { field: "Status", width: 100 },
+    ];
+
+    expect(fit(columns, {}, 240)).toEqual([75, 90, 75]);
+  });
+
+  test("leaves columns the user has sized alone when shrinking", () => {
+    const columns: readonly ColumnDefinition<SampleRow>[] = [
+      { field: "Id", width: 100 },
+      { field: "Name", width: 100 },
+      { field: "Status", width: 100 },
+    ];
+
+    expect(fit(columns, { Name: 100 }, 220)).toEqual([60, 100, 60]);
+  });
+
+  test("leaves the columns alone when shrinking to every minimum still does not fit", () => {
+    expect(fit(equalColumns, {}, 50)).toEqual([100, 100, 100]);
+  });
+
+  test("leaves a fully user-sized set of columns alone when they exceed the width", () => {
+    const columns: readonly ColumnDefinition<SampleRow>[] = [
+      { field: "Id", width: 100 },
+      { field: "Name", width: 100 },
+      { field: "Status", width: 100 },
+    ];
+
+    expect(fit(columns, { Id: 100, Name: 100, Status: 100 }, 200)).toEqual([
+      100, 100, 100,
+    ]);
   });
 
   test("holds a column the user sized and grows only the rest", () => {
