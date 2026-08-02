@@ -129,20 +129,77 @@ still lands in the changelog as its own entry under that one version.
 
 ### Releasing
 
-Two modes, both from a clean tree with `npm login` already done.
+Both modes need a clean tree and `npm login` already done.
+
+**A stable release is two steps, not one.** `pnpm release` only publishes what
+is already in the `version` fields — it bumps nothing. The bump is
+`pnpm version-packages`, and skipping it means `changeset publish` finds the
+current version already on npm and exits having done nothing.
+
+`version-packages` rewrites `version` fields, appends to each `CHANGELOG.md`,
+and deletes the changeset files it consumed. Review that diff before committing
+it — all of it belongs in the commit. The full sequence, including how the bump
+reaches a protected `main`, is under **Branches and pull requests** below.
 
 ```bash
 pnpm release:dev   # snapshot: 0.0.0-dev-<timestamp>, published under the `dev` tag
-pnpm release       # stable: consumes changesets, publishes to `latest`
 ```
 
-`release:dev` is the one to reach for while iterating. It cuts a throwaway
-version off the `latest` tag, so `pnpm add @gridkitjs/core` keeps resolving to
-the last stable release and only `@dev` sees the snapshot.
+`release:dev` is the one to reach for while iterating, and unlike the stable
+path it is a single command — it runs the version step itself. It cuts a
+throwaway version off the `latest` tag, so `pnpm add @gridkitjs/core` keeps
+resolving to the last stable release and only `@dev` sees the snapshot.
 
 It rewrites versions and consumes changeset files as a side effect, so **do not
 commit the tree it leaves behind** — `git checkout .` after publishing. The
 changesets have to survive to drive the next stable release.
+
+### Branches and pull requests
+
+`main` is protected: it takes no direct pushes, and CI must pass before a merge.
+Every change reaches it through a pull request, including your own.
+
+```bash
+git checkout main && git pull
+git checkout -b feat/sortable-columns
+# work, commit, and write the changeset
+git push -u origin feat/sortable-columns
+gh pr create --fill
+```
+
+Branch names take the commit type as their prefix — `feat/`, `fix/`,
+`docs/`, `refactor/`, `chore/` — then a short kebab-case subject:
+`feat/sortable-columns`, `fix/empty-row-array`.
+
+**The changeset belongs in the PR**, in the same commit as the change that
+needs it. A PR touching a published package without one has not finished:
+nothing else will bump the version, so the change ships invisibly or not at
+all.
+
+CI runs the sequence under **Standards** on every PR, in that order. Run it
+locally first rather than using CI to find what a single command would have.
+
+Squash-merge, so `main` keeps one commit per PR and the branch's messy history
+stays on the branch. The squash subject is the PR title, so it follows the same
+Conventional Commits rules as any other commit.
+
+**Releases go out from `main`, never from a feature branch.** Merge the work
+first, then cut the release. The version bump is itself a commit to a protected
+branch, so it takes the same route as anything else:
+
+```bash
+git checkout main && git pull
+git checkout -b chore/version-packages
+pnpm version-packages
+git commit -am "chore: version packages"
+git push -u origin chore/version-packages
+gh pr create --fill          # merge once CI is green
+git checkout main && git pull
+pnpm release                 # publish the versions now on main
+```
+
+`pnpm release` is the only step that runs off `main` directly, and it publishes
+rather than committing — so it never pushes anything.
 
 ### Commits
 
