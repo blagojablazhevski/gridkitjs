@@ -49,22 +49,7 @@ export default function GridHeader<Row>({
                         : KEYBOARD_STEP,
                     );
                   }}
-                >
-                  <svg
-                    className="header-resize-grip"
-                    viewBox="0 0 6 14"
-                    width="6"
-                    height="14"
-                    aria-hidden="true"
-                  >
-                    <circle cx="1.5" cy="4" r="1" />
-                    <circle cx="1.5" cy="7" r="1" />
-                    <circle cx="1.5" cy="10" r="1" />
-                    <circle cx="4.5" cy="4" r="1" />
-                    <circle cx="4.5" cy="7" r="1" />
-                    <circle cx="4.5" cy="10" r="1" />
-                  </svg>
-                </span>
+                />
               )}
             </th>
           );
