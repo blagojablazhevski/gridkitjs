@@ -1,17 +1,22 @@
 import { useMemo, useRef, useState, type ReactNode } from "react";
 import {
+  applyColumnOrder,
   defineColumnsFromRows,
   fitColumnsToWidth,
+  moveColumnBefore,
   resolveColumnWidths,
   totalColumnWidth,
   type ColumnDefinition as CoreColumnDefinition,
   type ResolvedColumn as CoreResolvedColumn,
+  type ColumnOrderEvent,
+  type ColumnOrderState,
   type ColumnResizeEvent,
   type ColumnSizeDefaults,
   type ColumnSizingState,
 } from "@gridkitjs/core";
 import GridHeader from "./components/GridHeader";
 import GridBody from "./components/GridBody";
+import useColumnDrag, { type DropTarget } from "./useColumnDrag";
 import useColumnResize from "./useColumnResize";
 import useElementWidth from "./useElementWidth";
 
@@ -51,6 +56,11 @@ export interface DataGridProps<Row> {
   /** Whether columns can be dragged wider, unless a column says otherwise. */
   resizableColumns?: boolean | undefined;
   /**
+   * Whether columns can be dragged into a new position, unless a column says
+   * otherwise. Turning it off leaves an order the user already made in place.
+   */
+  reorderableColumns?: boolean | undefined;
+  /**
    * Whether columns fill the grid's width or sit at their own. Defaults to
    * `"fit"`, under which columns the user has sized keep their width and the
    * rest share what is left.
@@ -58,6 +68,11 @@ export interface DataGridProps<Row> {
   resizeMode?: ResizeMode | undefined;
   /** Column widths to start from, keyed by column id. Uncontrolled. */
   defaultColumnSizing?: ColumnSizingState | undefined;
+  /**
+   * Column ids in the order to start in. Uncontrolled, and partial: ids it
+   * omits keep their position among `columns` and follow those it lists.
+   */
+  defaultColumnOrder?: ColumnOrderState | undefined;
   /**
    * Sizes applied to columns that do not set their own — the width they start
    * at and the bounds they may be resized between. Distinct from
@@ -70,6 +85,11 @@ export interface DataGridProps<Row> {
    * the one to persist. Auto-fit does not call it; it reports user intent only.
    */
   onColumnResize?: ((event: ColumnResizeEvent) => void) | undefined;
+  /**
+   * Called once when the user drops a column somewhere new. A drop that leaves
+   * the order as it was does not call it.
+   */
+  onColumnOrderChange?: ((event: ColumnOrderEvent) => void) | undefined;
 }
 
 export function DataGridComponent<Row>({
@@ -78,10 +98,13 @@ export function DataGridComponent<Row>({
   borders,
   hoverable,
   resizableColumns = false,
+  reorderableColumns = false,
   resizeMode = "fit",
   defaultColumnSizing,
+  defaultColumnOrder,
   columnSizeDefaults,
   onColumnResize,
+  onColumnOrderChange,
 }: DataGridProps<Row>) {
   const hoverRows = hoverable?.rows ?? true;
   const hoverColumns = hoverable?.columns ?? true;
@@ -93,6 +116,9 @@ export function DataGridComponent<Row>({
   const [sizing, setSizing] = useState<ColumnSizingState>(
     defaultColumnSizing ?? {},
   );
+  const [order, setOrder] = useState<ColumnOrderState>(
+    defaultColumnOrder ?? [],
+  );
 
   const definedColumns = useMemo<readonly ColumnDefinition<Row>[]>(() => {
     if (columns && columns.length !== 0) return columns;
@@ -102,25 +128,36 @@ export function DataGridComponent<Row>({
   }, [columns, dataSource]);
 
   /**
+   * Ahead of sizing, so everything downstream reads one already-ordered list
+   * and no part of the grid has to know a reorder happened.
+   */
+  const orderedColumns = useMemo(
+    () => applyColumnOrder(definedColumns, order),
+    [definedColumns, order],
+  );
+
+  /**
    * Auto-fit is a derivation rather than a write back into `sizing`, so that a
    * `width` set in a column definition is never overwritten and the effect
    * cannot chase its own output. `"fixed"` is then simply the absence of it.
    */
   const resolved = useMemo(() => {
-    const widths = resolveColumnWidths(definedColumns, sizing, {
+    const widths = resolveColumnWidths(orderedColumns, sizing, {
       sizes: columnSizeDefaults,
       resizable: resizableColumns,
+      reorderable: reorderableColumns,
     });
     return resizeMode === "fit" && viewportWidth !== null
       ? fitColumnsToWidth(widths, viewportWidth, columnSizeDefaults)
       : widths;
   }, [
-    definedColumns,
+    orderedColumns,
     sizing,
     resizeMode,
     viewportWidth,
     columnSizeDefaults,
     resizableColumns,
+    reorderableColumns,
   ]);
 
   const resize = useColumnResize<Row>({
@@ -130,6 +167,34 @@ export function DataGridComponent<Row>({
     columnSizeDefaults,
     onColumnResize,
   });
+
+  /**
+   * The ids as displayed, which a drop is expressed against — the order state
+   * starts empty and may name only some columns, so moving against it directly
+   * would have nothing to rearrange.
+   */
+  const displayedIds = useMemo(
+    () => orderedColumns.map((column) => column.id ?? column.field),
+    [orderedColumns],
+  );
+
+  /**
+   * The one place a drop is applied. A second drop zone — a grouping bar above
+   * the header — turns this into a switch on `target.kind` and touches nothing
+   * else.
+   */
+  function handleDrop(target: DropTarget, movedId: string): void {
+    const next = moveColumnBefore(displayedIds, movedId, target.beforeId);
+    // `moveColumnBefore` hands back the same reference for a move that changes
+    // nothing, so a drop in place neither renders nor reports.
+    if (next === displayedIds) {
+      return;
+    }
+    setOrder(next);
+    onColumnOrderChange?.({ columnId: movedId, order: next });
+  }
+
+  const drag = useColumnDrag<Row>({ order: displayedIds, onDrop: handleDrop });
 
   return (
     <div className="gridkit-data-grid-viewport" ref={viewportRef}>
@@ -153,7 +218,7 @@ export function DataGridComponent<Row>({
             <col key={entry.id} style={{ width: entry.width }} />
           ))}
         </colgroup>
-        <GridHeader<Row> columns={resolved} resize={resize} />
+        <GridHeader<Row> columns={resolved} resize={resize} drag={drag} />
         <GridBody<Row>
           columns={resolved}
           dataSource={dataSource}

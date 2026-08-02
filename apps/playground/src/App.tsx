@@ -53,7 +53,9 @@ export default function App() {
       <h1 className="text-2xl font-bold">GridKit Playground</h1>
       <p className="mt-2 text-sm text-gray-600">
         Import from <code>@gridkitjs/react</code> and render it here. Drag a
-        column edge to resize, or double-click it to fit the content.
+        column edge to resize, or double-click it to fit the content. Drag a
+        header itself to reorder — or focus one and press{" "}
+        <code>Ctrl+Arrow</code>.
       </p>
       <fieldset className="mt-4 flex gap-4 text-sm">
         <legend className="sr-only">Resize mode</legend>
@@ -79,6 +81,7 @@ export default function App() {
           dataSource={rows}
           borders="all"
           resizableColumns
+          reorderableColumns
           resizeMode={resizeMode}
         />
       </div>
