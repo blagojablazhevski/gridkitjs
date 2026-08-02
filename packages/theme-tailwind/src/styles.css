@@ -280,26 +280,18 @@
     border: 1px solid var(--gridkit-line);
   }
 
-  .gridkit-data-grid.borders-all .grid-header .header-cell:last-child,
-  .gridkit-data-grid.borders-all .grid-cell:last-child {
-    border-right: none;
-  }
-
   /*
-   * The first column's left border has no neighbour to collapse with, so
-   * unlike every internal boundary it is a genuinely extra pixel — the table
-   * renders 1px wider than the sum of its columns. Stripped here and repainted
-   * as a table-level `box-shadow`, which draws the same line without adding to
-   * the box model. On the table rather than the cell so it can never be
-   * overwritten by a cell's own `box-shadow` (`is-resizing`, `is-dragging`,
-   * `is-drop-before`/`is-drop-after` all set one on the `th`/`td` itself).
+   * The outer left/right edges have no neighbouring cell to collapse with, so
+   * unlike every internal boundary they are a genuinely extra pixel — without
+   * this the table would render 2px wider than the sum of its columns.
    */
   .gridkit-data-grid.borders-all .grid-header .header-cell:first-child,
   .gridkit-data-grid.borders-all .grid-cell:first-child {
     border-left: none;
   }
 
-  .gridkit-data-grid.borders-all {
-    box-shadow: inset 1px 0 0 0 var(--gridkit-line);
+  .gridkit-data-grid.borders-all .grid-header .header-cell:last-child,
+  .gridkit-data-grid.borders-all .grid-cell:last-child {
+    border-right: none;
   }
 }
