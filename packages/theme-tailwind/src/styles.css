@@ -89,6 +89,20 @@
     white-space: nowrap;
   }
 
+  /*
+   * A column that opts into `wrap` needs all three of the rule above undone —
+   * `overflow: hidden` alone would still clip a second line, and
+   * `text-overflow: ellipsis` only matters once `overflow` stops being
+   * `visible`. Fixed layout still holds the column's width; only its height
+   * stops being one line's worth.
+   */
+  .gridkit-data-grid .header-cell.is-wrapped,
+  .gridkit-data-grid .grid-cell.is-wrapped {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+  }
+
   .gridkit-data-grid .grid-header {
     background-color: var(--gridkit-surface);
   }

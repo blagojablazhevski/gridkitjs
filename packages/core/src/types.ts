@@ -120,6 +120,33 @@ export interface ColumnDefinition<Row, Node = string> {
    * grid-level default. A column that cannot move can still be moved past.
    */
   reorderable?: boolean;
+  /**
+   * Lets this column's header and/or cell text wrap onto multiple lines
+   * instead of the grid's default single line with an ellipsis. Off by
+   * default: wrapping changes row height, so it stays a column's own choice
+   * rather than something a minor release could turn on under an existing
+   * grid.
+   */
+  wrap?: ColumnWrapConfig;
+  /**
+   * Extra class names appended to this column's `th`. An escape hatch for a
+   * consumer's own CSS — nothing in this package reads them — for anything
+   * `wrap` and the rest of this type don't cover.
+   */
+  headerClassName?: string;
+  /**
+   * Extra class names appended to this column's `td`, on every row. Static
+   * per column: a per-row condition is already `cellTemplate`'s job (a
+   * template returning its own markup with a conditional class), so this
+   * stays a plain string rather than taking the row.
+   */
+  cellClassName?: string;
+}
+
+/** Which parts of a column opt out of the grid's default single-line text. */
+export interface ColumnWrapConfig {
+  header?: boolean;
+  cells?: boolean;
 }
 
 /**
