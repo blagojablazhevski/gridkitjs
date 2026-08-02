@@ -16,9 +16,9 @@ import useColumnResize from "./useColumnResize";
 import useElementWidth from "./useElementWidth";
 
 /**
- * A column whose header may render arbitrary React content. @gridkitjs/core
- * stays framework-agnostic and so leaves that output type open; this is the
- * binding React consumers want, and the one they should import.
+ * A column whose header and cells may render arbitrary React content.
+ * @gridkitjs/core stays framework-agnostic and so leaves that output type open;
+ * this is the binding React consumers want, and the one they should import.
  */
 export type ColumnDefinition<Row> = CoreColumnDefinition<Row, ReactNode>;
 

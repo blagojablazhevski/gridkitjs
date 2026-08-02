@@ -18,11 +18,26 @@ const rows = [
 
 type Row = (typeof rows)[number];
 
+const currency = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+});
+
 // Assignable to the ReactNode-bound alias despite defaulting to `string`.
 const columns: readonly ColumnDefinition<Row>[] = [
   ...defineColumnsFromRows(rows),
   // Declared rather than inferred, so its alignment comes from `type` alone.
-  { field: "Cost", id: "Cost.currency", type: "currency", header: "Cost" },
+  {
+    field: "Cost",
+    id: "Cost.currency",
+    type: "currency",
+    headerTemplate: <span className="italic">Cost</span>,
+    cellTemplate: ({ value, row }) => (
+      <span className={row.Cost > 1000 ? "font-bold text-red-600" : ""}>
+        {currency.format(Number(value))}
+      </span>
+    ),
+  },
 ];
 
 const modes: readonly { value: ResizeMode; description: string }[] = [

@@ -6,8 +6,10 @@ export {
   type ResizeMode,
   type ResolvedColumn,
 } from "./DataGrid/DataGrid";
-// Re-exported so a consumer wiring up resize needs one import, not two.
+// Re-exported so a consumer wiring up resize or typing a standalone
+// cellTemplate needs one import, not two.
 export type {
+  CellTemplateContext,
   ColumnResizeEvent,
   ColumnSizeDefaults,
   ColumnSizingState,

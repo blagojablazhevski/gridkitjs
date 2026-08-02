@@ -61,11 +61,11 @@ export function clampColumnWidth(
  * The sizing state winning means a user's drag outlives a re-render; a column
  * absent from it still tracks a `width` edited in the definition.
  */
-export function resolveColumnWidths<Row, Header>(
-  columns: readonly ColumnDefinition<Row, Header>[],
+export function resolveColumnWidths<Row, Node>(
+  columns: readonly ColumnDefinition<Row, Node>[],
   sizing: ColumnSizingState,
   options?: ColumnResolveOptions,
-): readonly ResolvedColumn<Row, Header>[] {
+): readonly ResolvedColumn<Row, Node>[] {
   const resolved = withDefaults(options?.sizes);
 
   return columns.map((column) => {
@@ -87,8 +87,8 @@ export function resolveColumnWidths<Row, Header>(
   });
 }
 
-export function totalColumnWidth<Row, Header>(
-  resolved: readonly ResolvedColumn<Row, Header>[],
+export function totalColumnWidth<Row, Node>(
+  resolved: readonly ResolvedColumn<Row, Node>[],
 ): number {
   return resolved.reduce((total, entry) => total + entry.width, 0);
 }
@@ -136,11 +136,11 @@ export function applyColumnResize(
  * them. Columns the user has sized are left at that width and the rest share
  * what is left, so dragging one column does not rubber-band it back.
  */
-export function fitColumnsToWidth<Row, Header>(
-  resolved: readonly ResolvedColumn<Row, Header>[],
+export function fitColumnsToWidth<Row, Node>(
+  resolved: readonly ResolvedColumn<Row, Node>[],
   availableWidth: number,
   defaults?: Partial<ColumnSizeDefaults>,
-): readonly ResolvedColumn<Row, Header>[] {
+): readonly ResolvedColumn<Row, Node>[] {
   const target = Math.floor(availableWidth);
   if (resolved.length === 0 || totalColumnWidth(resolved) >= target) {
     return resolved;

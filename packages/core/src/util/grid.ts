@@ -103,21 +103,23 @@ export function getColumnId<Row>(
 }
 
 /**
- * What a column's header shows: its own `header`, called first if it is a
- * function, or else a label read off the field path — `"Application.Id"`
+ * What a column's header shows: its own `headerTemplate`, called first if it is
+ * a function, or else a label read off the field path — `"Application.Id"`
  * reading as `"Application Id"`.
  */
-export function resolveColumnLabel<Row, Header>(
-  column: ColumnDefinition<Row, Header>,
-): Header | string {
-  const { header } = column;
-  if (header === undefined) {
+export function resolveColumnLabel<Row, Node>(
+  column: ColumnDefinition<Row, Node>,
+): Node | string {
+  const { headerTemplate } = column;
+  if (headerTemplate === undefined) {
     return column.field.split(".").join(" ");
   }
-  // `Header` is open, so it could itself be a function type and the `typeof`
+  // `Node` is open, so it could itself be a function type and the `typeof`
   // check cannot narrow on its own. A header that is callable is the lazy
-  // form by definition — no adapter binds `Header` to a function.
-  return typeof header === "function" ? (header as () => Header)() : header;
+  // form by definition — no adapter binds `Node` to a function.
+  return typeof headerTemplate === "function"
+    ? (headerTemplate as () => Node)()
+    : headerTemplate;
 }
 
 /**

@@ -49,11 +49,31 @@ export type ColumnType =
 export type ColumnAlignment = "left" | "center" | "right";
 
 /**
- * @typeParam Header - What a header renders to. This package is
- * framework-agnostic so it defaults to `string`; `@gridkitjs/react` binds it to
- * `ReactNode` so a header callback can return JSX.
+ * What `cellTemplate` receives. An object rather than positional arguments so
+ * that a later addition — a sort state, whether the row is selected — is not a
+ * breaking change to every template already written.
  */
-export interface ColumnDefinition<Row, Header = string> {
+export interface CellTemplateContext<Row> {
+  /**
+   * This cell's value, read off the column's field path. `unknown` because a
+   * dotted path's type cannot be recovered here; a template narrows it.
+   */
+  value: unknown;
+  /** The whole row, for a template that needs a sibling field. */
+  row: Row;
+  /**
+   * Position among the rows as rendered. Once paging exists this is the index
+   * within the page; an index into the whole dataset would be a second field.
+   */
+  rowIndex: number;
+}
+
+/**
+ * @typeParam Node - What a header or cell renders to. This package is
+ * framework-agnostic so it defaults to `string`; `@gridkitjs/react` binds it to
+ * `ReactNode` so a template can return JSX.
+ */
+export interface ColumnDefinition<Row, Node = string> {
   /**
    * Path to this cell's value: a key of `Row`, or `"Parent.Child"` for a leaf
    * one level inside a nested object. Any string still compiles — the union
@@ -67,7 +87,13 @@ export interface ColumnDefinition<Row, Header = string> {
    */
   id?: string;
   /** Header content, or a function returning it at render time. */
-  header?: Header | (() => Header) | undefined;
+  headerTemplate?: Node | (() => Node) | undefined;
+  /**
+   * Renders this column's cells in place of the raw value at `field`. The
+   * value is still resolved and handed over, so a template that only formats
+   * it never repeats the field path.
+   */
+  cellTemplate?: ((context: CellTemplateContext<Row>) => Node) | undefined;
   /**
    * The value type of this column's cells. This package is framework-agnostic so it
    * defaults to `string`;
@@ -126,8 +152,8 @@ export interface ColumnResolveOptions {
  * decision made once here rather than in each adapter, so a second framework
  * binding renders identically without repeating the logic.
  */
-export interface ResolvedColumn<Row, Header = string> {
-  column: ColumnDefinition<Row, Header>;
+export interface ResolvedColumn<Row, Node = string> {
+  column: ColumnDefinition<Row, Node>;
   id: string;
   width: number;
   /**
@@ -137,11 +163,11 @@ export interface ResolvedColumn<Row, Header = string> {
    */
   sized: boolean;
   /**
-   * What the header shows: the column's own `header`, or a label read off the
-   * field path. `string` is in the union because that fallback is text
-   * whatever `Header` is bound to.
+   * What the header shows: the column's own `headerTemplate`, or a label read
+   * off the field path. `string` is in the union because that fallback is text
+   * whatever `Node` is bound to.
    */
-  label: Header | string;
+  label: Node | string;
   /** Whether this column can be resized, after the grid-level default. */
   resizable: boolean;
   /** How this column's cells align, after falling back to its type. */

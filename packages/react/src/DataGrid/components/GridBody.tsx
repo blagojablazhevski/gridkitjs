@@ -18,18 +18,26 @@ export default function GridBody<Row>({
     <tbody className="grid-body">
       {dataSource?.map((row, index) => (
         <tr key={index} className="grid-row">
-          {columns.map(({ id, column, alignment }) => (
-            <td
-              key={id}
-              data-gridkit-column={id}
-              className={
-                id === activeColumnId ? "grid-cell is-resizing" : "grid-cell"
-              }
-              style={{ textAlign: alignment }}
-            >
-              {accessDotted(row, column.field) as ReactNode}
-            </td>
-          ))}
+          {columns.map(({ id, column, alignment }) => {
+            // Resolved either way, so a template that only formats the value
+            // never has to walk the field path a second time.
+            const value = accessDotted(row, column.field);
+
+            return (
+              <td
+                key={id}
+                data-gridkit-column={id}
+                className={
+                  id === activeColumnId ? "grid-cell is-resizing" : "grid-cell"
+                }
+                style={{ textAlign: alignment }}
+              >
+                {column.cellTemplate
+                  ? column.cellTemplate({ value, row, rowIndex: index })
+                  : (value as ReactNode)}
+              </td>
+            );
+          })}
         </tr>
       ))}
     </tbody>

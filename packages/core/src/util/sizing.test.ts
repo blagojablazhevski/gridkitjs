@@ -121,8 +121,8 @@ describe("resolveColumnWidths", () => {
 
   test("resolves each column's label, eagerly or lazily", () => {
     const columns: readonly ColumnDefinition<SampleRow>[] = [
-      { field: "Id", header: "Identifier" },
-      { field: "Name", header: () => "Full name" },
+      { field: "Id", headerTemplate: "Identifier" },
+      { field: "Name", headerTemplate: () => "Full name" },
       { field: "Status" },
     ];
 
@@ -293,7 +293,7 @@ describe("fitColumnsToWidth", () => {
 
   test("carries everything but the width through untouched", () => {
     const columns: readonly ColumnDefinition<SampleRow>[] = [
-      { field: "Id", width: 100, type: "number", header: "Identifier" },
+      { field: "Id", width: 100, type: "number", headerTemplate: "Identifier" },
       { field: "Name", width: 100, resizable: false },
     ];
 

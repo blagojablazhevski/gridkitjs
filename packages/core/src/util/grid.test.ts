@@ -21,14 +21,20 @@ interface SampleRow {
   Application: Application;
 }
 
-const sampleRows: readonly SampleRow[] = [
-  {
+/**
+ * One row, built fresh. A function rather than an index into `sampleRows`,
+ * which `noUncheckedIndexedAccess` types as possibly undefined.
+ */
+function sampleRow(): SampleRow {
+  return {
     Id: 1,
     Tags: ["a"],
     CreatedAt: new Date(0),
     Application: { Id: 9, Name: "Portal", Owner: { Name: "Ada" } },
-  },
-];
+  };
+}
+
+const sampleRows: readonly SampleRow[] = [sampleRow()];
 
 function fieldsOf(columns: readonly { field: string }[]): string[] {
   return columns.map((column) => column.field);
@@ -131,7 +137,7 @@ describe("FieldPath", () => {
 });
 
 describe("ColumnDefinition", () => {
-  test("widens to a richer header type, as @gridkitjs/react relies on", () => {
+  test("widens to a richer node type, as @gridkitjs/react relies on", () => {
     // Stands in for ReactNode so this package stays framework-agnostic.
     const widened: readonly ColumnDefinition<SampleRow, string | object>[] =
       defineColumnsFromRows(sampleRows);
@@ -139,14 +145,43 @@ describe("ColumnDefinition", () => {
     expect(widened).toHaveLength(5);
   });
 
-  test("accepts a header as either content or a lazy function", () => {
+  test("accepts a headerTemplate as either content or a lazy function", () => {
     const columns: readonly ColumnDefinition<SampleRow>[] = [
-      { field: "Id", header: "Identifier" },
-      { field: "Application.Name", header: () => "App name" },
+      { field: "Id", headerTemplate: "Identifier" },
+      { field: "Application.Name", headerTemplate: () => "App name" },
     ];
     const [, lazy] = columns;
 
-    expect(typeof lazy?.header).toBe("function");
+    expect(typeof lazy?.headerTemplate).toBe("function");
+  });
+
+  test("calls cellTemplate with the value, its row and the row index", () => {
+    const row = sampleRow();
+    const column: ColumnDefinition<SampleRow> = {
+      field: "Application.Name",
+      cellTemplate: ({ value, row: given, rowIndex }) =>
+        `${String(rowIndex)}:${String(value)}:${String(given.Id)}`,
+    };
+
+    expect(
+      column.cellTemplate?.({
+        value: accessDotted(row, column.field),
+        row,
+        rowIndex: 0,
+      }),
+    ).toBe("0:Portal:1");
+  });
+
+  test("widens cellTemplate with the node type, as a header does", () => {
+    const marker = { node: true };
+    const column: ColumnDefinition<SampleRow, string | object> = {
+      field: "Id",
+      cellTemplate: () => marker,
+    };
+
+    expect(
+      column.cellTemplate?.({ value: 1, row: sampleRow(), rowIndex: 0 }),
+    ).toBe(marker);
   });
 });
 
@@ -175,31 +210,37 @@ describe("alignmentForType", () => {
 });
 
 describe("resolveColumnLabel", () => {
-  test("takes the header as given", () => {
-    expect(
-      resolveColumnLabel<SampleRow, string>({ field: "Id", header: "#" }),
-    ).toBe("#");
-  });
-
-  test("calls a lazy header", () => {
+  test("takes the headerTemplate as given", () => {
     expect(
       resolveColumnLabel<SampleRow, string>({
         field: "Id",
-        header: () => "Identifier",
+        headerTemplate: "#",
+      }),
+    ).toBe("#");
+  });
+
+  test("calls a lazy headerTemplate", () => {
+    expect(
+      resolveColumnLabel<SampleRow, string>({
+        field: "Id",
+        headerTemplate: () => "Identifier",
       }),
     ).toBe("Identifier");
   });
 
-  test("reads a label off the field path when no header is set", () => {
+  test("reads a label off the field path when no headerTemplate is set", () => {
     expect(resolveColumnLabel<SampleRow, string>({ field: "Id" })).toBe("Id");
     expect(
       resolveColumnLabel<SampleRow, string>({ field: "Application.Id" }),
     ).toBe("Application Id");
   });
 
-  test("keeps an empty header rather than falling back to the field", () => {
+  test("keeps an empty headerTemplate rather than falling back to the field", () => {
     expect(
-      resolveColumnLabel<SampleRow, string>({ field: "Id", header: "" }),
+      resolveColumnLabel<SampleRow, string>({
+        field: "Id",
+        headerTemplate: "",
+      }),
     ).toBe("");
   });
 });
