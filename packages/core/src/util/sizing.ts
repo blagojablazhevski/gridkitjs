@@ -129,55 +129,57 @@ export function applyColumnResize(
   );
 }
 
+interface SizingEntry<Row, Node> {
+  entry: ResolvedColumn<Row, Node>;
+  width: number;
+  bound: number;
+  adjustable: boolean;
+}
+
 /**
- * Grows columns proportionally until they fill `availableWidth`.
- *
- * Growth only: columns that already meet or exceed the width are returned
- * untouched, so a container too narrow for them scrolls rather than crushing
- * them. Columns the user has sized are left at that width and the rest share
- * what is left, so dragging one column does not rubber-band it back.
+ * Whether `item` has reached `bound` in the direction it moves toward — above
+ * it for a column growing to a `maxWidth`, below it for one shrinking to a
+ * `minWidth`.
  */
-export function fitColumnsToWidth<Row, Node>(
-  resolved: readonly ResolvedColumn<Row, Node>[],
-  availableWidth: number,
-  defaults?: Partial<ColumnSizeDefaults>,
-): readonly ResolvedColumn<Row, Node>[] {
-  const target = Math.floor(availableWidth);
-  if (resolved.length === 0 || totalColumnWidth(resolved) >= target) {
-    return resolved;
-  }
+function reachedBound<Row, Node>(
+  width: number,
+  item: SizingEntry<Row, Node>,
+): boolean {
+  return item.bound > item.width ? width >= item.bound : width <= item.bound;
+}
 
-  const entries = resolved.map((entry) => ({
-    entry,
-    width: entry.width,
-    maxWidth: resolveColumnConstraints(entry.column, defaults).maxWidth,
-    growable: !entry.sized,
-  }));
-  const sum = () => entries.reduce((total, item) => total + item.width, 0);
-
-  // Clamping a column at its maximum frees surplus the others have to absorb,
-  // so a pass that clamped anything is followed by another.
+/**
+ * Moves every adjustable entry's `width` toward `bound` by its proportional
+ * share of `remaining`'s current surplus or deficit, looping so a column
+ * clamped at its bound in one pass frees the remainder for the others to
+ * absorb in the next.
+ */
+function redistribute<Row, Node>(
+  entries: readonly SizingEntry<Row, Node>[],
+  remaining: (sum: number) => number,
+): void {
   for (;;) {
-    const growing = entries.filter(
-      (item) => item.growable && item.width < item.maxWidth,
+    const movable = entries.filter(
+      (item) => item.adjustable && !reachedBound(item.width, item),
     );
-    const surplus = target - sum();
-    if (surplus <= 0 || growing.length === 0) {
+    const left = remaining(entries.reduce((t, i) => t + i.width, 0));
+    if (left <= 0 || movable.length === 0) {
       break;
     }
 
-    const base = growing.reduce((total, item) => total + item.width, 0);
+    const base = movable.reduce((total, item) => total + item.width, 0);
     let clamped = false;
 
-    for (const item of growing) {
+    for (const item of movable) {
       const share =
-        base === 0 ? surplus / growing.length : (surplus * item.width) / base;
+        base === 0 ? left / movable.length : (left * item.width) / base;
+      const next = item.width + (item.bound > item.width ? share : -share);
 
-      if (item.width + share >= item.maxWidth) {
-        item.width = item.maxWidth;
+      if (reachedBound(next, item)) {
+        item.width = item.bound;
         clamped = true;
       } else {
-        item.width += share;
+        item.width = next;
       }
     }
 
@@ -185,18 +187,77 @@ export function fitColumnsToWidth<Row, Node>(
       break;
     }
   }
+}
 
-  // Fractional widths would leave the table a sub-pixel short of its container
-  // and show a scrollbar that never goes away, so floor every column and hand
-  // the lost pixels back out one at a time.
-  let remainder = target - entries.reduce((t, i) => t + Math.floor(i.width), 0);
+/**
+ * Fits columns to `availableWidth`: grows them to fill leftover space, or
+ * shrinks them to relieve an overflow, in both cases proportionally to each
+ * column's current width. Columns the user has sized are left alone in
+ * either direction, so dragging one column neither rubber-bands it back nor
+ * has it absorb a squeeze meant for the rest.
+ *
+ * Growing stops at each column's `maxWidth`; shrinking stops at its
+ * `minWidth`. If shrinking every adjustable column to its floor still does
+ * not reach `availableWidth`, the columns are returned untouched and the
+ * container scrolls rather than crushing them further.
+ */
+export function fitColumnsToWidth<Row, Node>(
+  resolved: readonly ResolvedColumn<Row, Node>[],
+  availableWidth: number,
+  defaults?: Partial<ColumnSizeDefaults>,
+): readonly ResolvedColumn<Row, Node>[] {
+  const target = Math.floor(availableWidth);
+  const total = totalColumnWidth(resolved);
+  if (resolved.length === 0 || total === target) {
+    return resolved;
+  }
 
-  return entries.map((item) => {
-    let width = Math.floor(item.width);
-    if (remainder > 0 && item.growable && width < item.maxWidth) {
-      width += 1;
-      remainder -= 1;
+  const growing = total < target;
+  const entries: SizingEntry<Row, Node>[] = resolved.map((entry) => {
+    const constraints = resolveColumnConstraints(entry.column, defaults);
+    return {
+      entry,
+      width: entry.width,
+      bound: growing ? constraints.maxWidth : constraints.minWidth,
+      adjustable: !entry.sized,
+    };
+  });
+
+  if (!growing) {
+    // Only unsized columns can be shrunk, so if they alone cannot reach the
+    // target the grid genuinely cannot fit and should scroll, unchanged.
+    const floor = entries.reduce(
+      (sum, item) => sum + (item.adjustable ? item.bound : item.width),
+      0,
+    );
+    if (floor > target) {
+      return resolved;
     }
+  }
+
+  redistribute(entries, (sum) => (growing ? target - sum : sum - target));
+
+  // Fractional widths would leave the table a sub-pixel off its container and
+  // show a scrollbar that never goes away, so round every column toward the
+  // target and hand the remaining pixels back out (growing) or claw them
+  // back (shrinking) one at a time.
+  const rounded = entries.map((item) =>
+    growing ? Math.floor(item.width) : Math.ceil(item.width),
+  );
+  let remainder = target - rounded.reduce((total, width) => total + width, 0);
+
+  return entries.map((item, index) => {
+    let width = rounded[index] ?? item.width;
+    // Rounding toward the target can only ever leave it short when growing
+    // (floor) or over when shrinking (ceil), so only one direction is ever
+    // live here — but each still needs room left before its own bound.
+    const hasRoom = growing ? width < item.bound : width > item.bound;
+
+    if (remainder !== 0 && item.adjustable && hasRoom) {
+      width += growing ? 1 : -1;
+      remainder += growing ? -1 : 1;
+    }
+
     return { ...item.entry, width };
   });
 }
