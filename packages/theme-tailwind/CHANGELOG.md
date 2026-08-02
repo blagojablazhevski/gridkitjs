@@ -1,5 +1,14 @@
 # @gridkitjs/theme-tailwind
 
+## 0.2.2
+
+### Patch Changes
+
+- 7dcffc9: A column with `wrap` enabled now breaks a word longer than the column instead
+  of overflowing it — `white-space: normal` alone only breaks at spaces, so a
+  long unbroken token (a URL, a long identifier) previously spilled past the
+  column's fixed width.
+
 ## 0.2.1
 
 ### Patch Changes
