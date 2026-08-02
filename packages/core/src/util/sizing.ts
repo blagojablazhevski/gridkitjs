@@ -82,6 +82,7 @@ export function resolveColumnWidths<Row, Node>(
       ),
       label: resolveColumnLabel(column),
       resizable: column.resizable ?? options?.resizable ?? false,
+      reorderable: column.reorderable ?? options?.reorderable ?? false,
       alignment: column.alignment ?? alignmentForType(column.type ?? "string"),
     };
   });

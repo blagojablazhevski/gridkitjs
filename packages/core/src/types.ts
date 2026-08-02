@@ -115,6 +115,11 @@ export interface ColumnDefinition<Row, Node = string> {
   maxWidth?: number;
   /** Whether this column can be resized, overriding the grid-level default. */
   resizable?: boolean;
+  /**
+   * Whether this column can be dragged to a new position, overriding the
+   * grid-level default. A column that cannot move can still be moved past.
+   */
+  reorderable?: boolean;
 }
 
 /**
@@ -145,6 +150,8 @@ export interface ColumnResolveOptions {
   sizes?: Partial<ColumnSizeDefaults> | undefined;
   /** Whether columns are resizable, unless a column says otherwise. */
   resizable?: boolean | undefined;
+  /** Whether columns are reorderable, unless a column says otherwise. */
+  reorderable?: boolean | undefined;
 }
 
 /**
@@ -170,6 +177,8 @@ export interface ResolvedColumn<Row, Node = string> {
   label: Node | string;
   /** Whether this column can be resized, after the grid-level default. */
   resizable: boolean;
+  /** Whether this column can be dragged, after the grid-level default. */
+  reorderable: boolean;
   /** How this column's cells align, after falling back to its type. */
   alignment: ColumnAlignment;
 }
@@ -194,4 +203,26 @@ export interface ColumnResizeEvent {
   readonly width: number;
   readonly sizing: ColumnSizingState;
   readonly phase: "move" | "end";
+}
+
+/**
+ * Column ids in the order they render. It need not list every column: one
+ * absent from it keeps its position among the definitions and follows those
+ * that are listed.
+ */
+export type ColumnOrderState = readonly string[];
+
+/**
+ * Which side of a column a drop lands on, normalised away by
+ * `resolveDropBefore` so it reaches no state.
+ */
+export type DropSide = "before" | "after";
+
+/**
+ * Reports a user reorder. Unlike a resize there is no `"move"` phase — the
+ * order does not change until the drop.
+ */
+export interface ColumnOrderEvent {
+  readonly columnId: string;
+  readonly order: ColumnOrderState;
 }

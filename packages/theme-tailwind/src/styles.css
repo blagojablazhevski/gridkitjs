@@ -127,6 +127,71 @@
   }
 
   /*
+   * A reorderable header is the grab zone for its own drag, so a press on it
+   * must not select the label instead.
+   */
+  .gridkit-data-grid .header-cell[tabindex] {
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+  }
+
+  .gridkit-data-grid .header-cell.is-dragging {
+    cursor: grabbing;
+    opacity: 0.5;
+  }
+
+  /*
+   * The header trailing the pointer. It sits on the body rather than in the
+   * table, so it restates what a header cell gets from its place in the grid.
+   *
+   * `pointer-events: none` is load-bearing: sitting under the cursor, it would
+   * otherwise mask every header it passes over and there would be no drop
+   * target at all.
+   */
+  .gridkit-data-grid.drag-ghost {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 50;
+    padding: 0.5rem;
+    font-weight: 700;
+    text-align: center;
+    background-color: var(--gridkit-surface);
+    border: 1px dashed var(--gridkit-accent);
+    /* border-radius: 0.25rem; */
+    /* box-shadow: 0 4px 12px oklch(0 0 0 / 0.15); */
+    opacity: 0.75;
+    pointer-events: none;
+    /*
+     * Restated because the rule that clips a header's text is scoped to a
+     * `.header-cell` inside the grid, and the ghost carries that class while
+     * being the grid element itself.
+     */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    /* Placed by a transform written straight to the node each pointer move. */
+    will-change: transform;
+  }
+
+  /*
+   * Where the column would land, drawn on the gap's own edge so the one gap
+   * between two columns reads as one line.
+   *
+   * `box-shadow` for the reason the resize line uses it, and because a
+   * recoloured `borders-vertical` border would land on the neighbour and read
+   * as a column out.
+   */
+  .gridkit-data-grid .header-cell.is-drop-before {
+    box-shadow: inset 2px 0 0 0 var(--gridkit-accent);
+  }
+
+  .gridkit-data-grid .header-cell.is-drop-after {
+    box-shadow: inset -2px 0 0 0 var(--gridkit-accent);
+  }
+
+  /*
    * `pointer-events: none` keeps the grab zone exactly the handle's 6px — the
    * grip only says where to click.
    */

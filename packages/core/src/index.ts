@@ -5,12 +5,15 @@ export type {
   FieldPath,
   ColumnAlignment,
   ColumnConstraints,
+  ColumnOrderEvent,
+  ColumnOrderState,
   ColumnResizeEvent,
   ColumnResizeSession,
   ColumnResolveOptions,
   ColumnSizeDefaults,
   ColumnSizingState,
   ColumnType,
+  DropSide,
   ResolvedColumn,
 } from "./types";
 export {
@@ -20,6 +23,12 @@ export {
   getColumnId,
   resolveColumnLabel,
 } from "./util/grid";
+export {
+  applyColumnOrder,
+  moveColumnBefore,
+  movesColumn,
+  resolveDropBefore,
+} from "./util/ordering";
 export {
   DEFAULT_COLUMN_SIZES,
   KEYBOARD_STEP,
