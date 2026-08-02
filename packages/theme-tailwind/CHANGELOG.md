@@ -1,5 +1,14 @@
 # @gridkitjs/theme-tailwind
 
+## 0.2.0
+
+### Minor Changes
+
+- 1e112a6: Styles the new `is-wrapped` state `@gridkitjs/react` adds for a column with
+  `wrap.header`/`wrap.cells` set: `overflow: visible`, `text-overflow: clip`,
+  and `white-space: normal` in place of the grid's default single-line
+  ellipsis, on just that column's header and/or cells.
+
 ## 0.1.0
 
 ### Minor Changes

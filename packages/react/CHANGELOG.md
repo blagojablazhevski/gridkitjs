@@ -1,5 +1,20 @@
 # @gridkitjs/react
 
+## 0.3.0
+
+### Minor Changes
+
+- 1e112a6: `ColumnDefinition`'s new `wrap`, `headerClassName`, and `cellClassName`
+  fields now render: `wrap.header`/`wrap.cells` add an `is-wrapped` class to
+  that column's `th`/`td` (rendered by `@gridkitjs/theme-tailwind` as
+  `white-space: normal`), and `headerClassName`/`cellClassName` are appended
+  to the same elements as-is.
+
+### Patch Changes
+
+- Updated dependencies [1e112a6]
+  - @gridkitjs/core@0.3.0
+
 ## 0.2.0
 
 ### Minor Changes
