@@ -82,6 +82,10 @@ infer the bump from the commit type: `feat:` does not mean minor, and a `fix:`
 that changes a signature is still breaking. The commit type and the release
 version are independent.
 
+**Each package carries its own version.** They are not kept in step, so a
+release that takes `core` and `react` to `0.1.0` while `theme-tailwind` stays
+at `0.0.1` is correct — a package with no pending changeset does not move.
+
 **Which bump.** Pre-1.0, so `major` stays unused and breaking changes go in
 `minor`:
 
@@ -118,7 +122,10 @@ Dependents are bumped automatically — `updateInternalDependencies: "patch"` in
 file under `packages/react` changed too.
 
 A release consumes every pending changeset at once, so several small ones
-across a branch are normal and preferable to one vague entry.
+across a branch are normal and preferable to one vague entry. They do not
+stack: the highest bump a package is given wins and applies once, so four
+pending minors move it from `0.0.1` to `0.1.0`, not to `0.4.0`. Every summary
+still lands in the changelog as its own entry under that one version.
 
 ### Releasing
 
