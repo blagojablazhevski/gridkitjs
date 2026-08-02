@@ -183,6 +183,26 @@ describe("ColumnDefinition", () => {
       column.cellTemplate?.({ value: 1, row: sampleRow(), rowIndex: 0 }),
     ).toBe(marker);
   });
+
+  test("accepts an optional wrap config, unread by core itself", () => {
+    const column: ColumnDefinition<SampleRow> = {
+      field: "Id",
+      wrap: { header: true, cells: true },
+    };
+
+    expect(column.wrap).toEqual({ header: true, cells: true });
+  });
+
+  test("accepts optional cellClassName and headerClassName, unused by core itself", () => {
+    const column: ColumnDefinition<SampleRow> = {
+      field: "Id",
+      cellClassName: "italic",
+      headerClassName: "italic",
+    };
+
+    expect(column.cellClassName).toBe("italic");
+    expect(column.headerClassName).toBe("italic");
+  });
 });
 
 describe("alignmentForType", () => {

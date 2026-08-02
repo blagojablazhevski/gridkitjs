@@ -27,9 +27,14 @@ export default function GridBody<Row>({
               <td
                 key={id}
                 data-gridkit-column={id}
-                className={
-                  id === activeColumnId ? "grid-cell is-resizing" : "grid-cell"
-                }
+                className={[
+                  "grid-cell",
+                  id === activeColumnId ? "is-resizing" : "",
+                  column.wrap?.cells ? "is-wrapped" : "",
+                  column.cellClassName ?? "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
                 style={{ textAlign: alignment }}
               >
                 {column.cellTemplate

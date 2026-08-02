@@ -45,6 +45,8 @@ export default function GridHeader<Row>({
                 dragging ? "is-dragging" : "",
                 dropBefore ? "is-drop-before" : "",
                 dropAfter ? "is-drop-after" : "",
+                column.wrap?.header ? "is-wrapped" : "",
+                column.headerClassName ?? "",
               ]
                 .filter(Boolean)
                 .join(" ")}

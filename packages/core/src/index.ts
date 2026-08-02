@@ -13,6 +13,7 @@ export type {
   ColumnSizeDefaults,
   ColumnSizingState,
   ColumnType,
+  ColumnWrapConfig,
   DropSide,
   ResolvedColumn,
 } from "./types";
