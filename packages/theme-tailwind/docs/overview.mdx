@@ -1,0 +1,131 @@
+---
+title: "@gridkitjs/theme-tailwind"
+description: "Palette tokens, dark mode, and the grid's styles."
+---
+
+@gridkitjs/react renders semantic class names — gridkit-data-grid, header-cell, grid-row — and this stylesheet targets them directly. Nothing needs to scan component source, and every colour is a CSS custom property, so overriding one is plain CSS.
+
+## Install
+
+```ts
+npm install @gridkitjs/theme-tailwind
+```
+
+```css
+@import "tailwindcss";
+@import "@gridkitjs/theme-tailwind/styles.css";
+```
+
+## Semantic classes
+
+export const classRows = [
+  {
+    name: ".gridkit-data-grid",
+    type: "<table>",
+    description: "The grid itself. Carries borders-horizontal/vertical/all and no-hover-rows/columns/cells state classes.",
+  },
+  {
+    name: ".grid-header",
+    type: "<tr>",
+    description: "The header row.",
+  },
+  {
+    name: ".header-cell",
+    type: "<th>",
+    description: "A header cell. States: is-resizing, is-dragging, is-drop-before, is-drop-after, is-wrapped.",
+  },
+  {
+    name: ".grid-row",
+    type: "<tr>",
+    description: "A body row.",
+  },
+  {
+    name: ".grid-cell",
+    type: "<td>",
+    description: "A body cell. States: is-resizing, is-wrapped.",
+  },
+  {
+    name: ".header-resize-handle",
+    type: "element",
+    description: "The draggable resize grip on a header cell's trailing edge.",
+  },
+  {
+    name: ".selectable-rows / .selectable-columns / .selectable-cells",
+    type: "<table>",
+    description: "Present on the grid while the matching selectable member is enabled — what turns on the pointer cursor and text-selection guard.",
+  },
+  {
+    name: ".is-selected",
+    type: "<tr> | <th> | <td>",
+    description: "A selected row, header cell, or cell. A selected cell wins over its row and column.",
+  },
+];
+
+<PropsTable rows={classRows} />
+
+## Theme tokens
+
+export const tokenRows = [
+  {
+    name: "--gridkit-surface",
+    type: "color",
+    description: "Header background.",
+  },
+  {
+    name: "--gridkit-surface-muted",
+    type: "color",
+    description: "Hover background.",
+  },
+  {
+    name: "--gridkit-line",
+    type: "color",
+    description: "Borders.",
+  },
+  {
+    name: "--gridkit-hover-line",
+    type: "color",
+    description: "Cell hover outline, resize edge.",
+  },
+  {
+    name: "--gridkit-fg",
+    type: "color",
+    description: "Text.",
+  },
+  {
+    name: "--gridkit-fg-muted",
+    type: "color",
+    description: "Secondary text, resize grip.",
+  },
+  {
+    name: "--gridkit-accent",
+    type: "color",
+    description: "Accent — resize and reorder indicator lines.",
+  },
+  {
+    name: "--gridkit-selected",
+    type: "color",
+    description: "A selected row, column, or cell.",
+  },
+  {
+    name: "--gridkit-selected-strong",
+    type: "color",
+    description: "A selected row or cell also hovered.",
+  },
+];
+
+<PropsTable rows={tokenRows} />
+
+```css
+:root {
+  --gridkit-accent: oklch(0.6 0.17 145);
+  --gridkit-line: oklch(0.9 0.01 145);
+}
+```
+
+## Dark mode
+
+The `dark:` variant is bound to a `.dark` class rather than the OS preference, so you drive the theme yourself:
+
+```ts
+document.documentElement.classList.toggle("dark", isDark);
+```
