@@ -1,0 +1,9 @@
+{
+  "order": [
+    "overview",
+    "column-definitions",
+    "resizing",
+    "ordering",
+    "selection"
+  ]
+}
