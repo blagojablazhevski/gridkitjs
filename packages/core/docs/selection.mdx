@@ -7,62 +7,17 @@ These transforms are what a click, a Ctrl-click, and a Shift-click each reduce t
 
 ## Functions
 
-export const functionRows = [
-  {
-    name: "toggleSelection(selection, id, mode)",
-    type: "SelectionState",
-    description:
-      "Adds id if absent, removes it if present — a Ctrl-click, or Space on the focused member.",
-  },
-  {
-    name: "selectOnly(selection, id, mode)",
-    type: "SelectionState",
-    description:
-      "The selection reduced to id alone — a plain click. Never deselects, so clicking the one selected row leaves it selected.",
-  },
-  {
-    name: "selectRange(selection, orderedIds, anchorId, focusId, mode)",
-    type: "SelectionState",
-    description:
-      'Every id from anchorId to focusId inclusive, spanning orderedIds — a Shift-click. Degrades to selectOnly under "single".',
-  },
-  {
-    name: "selectAll(selection, orderedIds, mode)",
-    type: "SelectionState",
-    description:
-      'Every id in orderedIds, or selection untouched under any mode but "multiple".',
-  },
-  {
-    name: "clearSelection(selection)",
-    type: "SelectionState",
-    description: "Empties the selection.",
-  },
-  {
-    name: "diffSelection(previous, next)",
-    type: "SelectionDiff",
-    description:
-      "What one transition added and removed — the one place a select and a deselect fired for the same interaction cannot disagree.",
-  },
-  {
-    name: "selectCell(selection, cell, mode)",
-    type: "CellSelectionState",
-    description:
-      "Moves the cell selection to cell — a plain click. Idempotent: clicking the selected cell again leaves it selected.",
-  },
-  {
-    name: "toggleCellSelection(selection, cell, mode)",
-    type: "CellSelectionState",
-    description:
-      "Moves to cell, or clears when it is already there — a Ctrl-click.",
-  },
-  {
-    name: "isSameCell(a, b)",
-    type: "boolean",
-    description: "Whether two cell selections address the same row and column.",
-  },
-];
-
-<PropsTable rows={functionRows} />
+| Function | Type | Description |
+| --- | --- | --- |
+| `toggleSelection(selection, id, mode)` | `SelectionState` | Adds id if absent, removes it if present — a Ctrl-click, or Space on the focused member. |
+| `selectOnly(selection, id, mode)` | `SelectionState` | The selection reduced to id alone — a plain click. Never deselects, so clicking the one selected row leaves it selected. |
+| `selectRange(selection, orderedIds, anchorId, focusId, mode)` | `SelectionState` | Every id from anchorId to focusId inclusive, spanning orderedIds — a Shift-click. Degrades to selectOnly under "single". |
+| `selectAll(selection, orderedIds, mode)` | `SelectionState` | Every id in orderedIds, or selection untouched under any mode but "multiple". |
+| `clearSelection(selection)` | `SelectionState` | Empties the selection. |
+| `diffSelection(previous, next)` | `SelectionDiff` | What one transition added and removed — the one place a select and a deselect fired for the same interaction cannot disagree. |
+| `selectCell(selection, cell, mode)` | `CellSelectionState` | Moves the cell selection to cell — a plain click. Idempotent: clicking the selected cell again leaves it selected. |
+| `toggleCellSelection(selection, cell, mode)` | `CellSelectionState` | Moves to cell, or clears when it is already there — a Ctrl-click. |
+| `isSameCell(a, b)` | `boolean` | Whether two cell selections address the same row and column. |
 
 ## The same logic, in the React grid
 

@@ -49,113 +49,26 @@ const [resizeMode, setResizeMode] = useState<ResizeMode>("fit");
 
 ## Props
 
-export const propRows = [
-  {
-    name: "columns",
-    type: "readonly ColumnDefinition<Row>[]",
-    description:
-      "Columns to render. Falls back to defineColumnsFromRows(dataSource) when omitted.",
-  },
-  {
-    name: "dataSource",
-    type: "readonly Row[]",
-    description: "The rows to render.",
-  },
-  {
-    name: "getRowId",
-    type: "(row: Row, index: number) => string",
-    default: "row position",
-    description:
-      "A row's stable identity, for state keyed by it. Give one for data that sorts, filters, or pages.",
-  },
-  {
-    name: "label",
-    type: "string",
-    description:
-      'The grid\'s accessible name, announced when it takes focus — without one a screen reader announces only "grid".',
-  },
-  {
-    name: "labelledBy",
-    type: "string",
-    description:
-      "The id of an element naming the grid, for a heading already on the page. Takes precedence over label.",
-  },
-  {
-    name: "borders",
-    type: '"horizontal" | "vertical" | "all" | "none"',
-    description: "Which cell borders to draw.",
-  },
-  {
-    name: "hoverable",
-    type: "{ rows?, columns?, cells? }",
-    description: "Which hover highlighting to enable.",
-  },
-  {
-    name: "resizableColumns",
-    type: "boolean",
-    default: "false",
-    description:
-      "Whether columns can be dragged wider, unless a column says otherwise.",
-  },
-  {
-    name: "reorderableColumns",
-    type: "boolean",
-    default: "false",
-    description: "Whether columns can be dragged into a new position.",
-  },
-  {
-    name: "resizeMode",
-    type: '"fit" | "fixed"',
-    default: '"fit"',
-    description: "Whether columns fill the grid's width or sit at their own.",
-  },
-  {
-    name: "defaultColumnSizing",
-    type: "ColumnSizingState",
-    description:
-      "Column widths to start from, keyed by column id. Uncontrolled.",
-  },
-  {
-    name: "defaultColumnOrder",
-    type: "readonly string[]",
-    description: "Column ids in the order to start in. Uncontrolled.",
-  },
-  {
-    name: "columnSizeDefaults",
-    type: "Partial<ColumnSizeDefaults>",
-    description: "Sizes applied to columns that do not set their own.",
-  },
-  {
-    name: "onColumnResize",
-    type: "(event: ColumnResizeEvent) => void",
-    description:
-      'Called as the user resizes a column: continuously with phase "move", once with "end".',
-  },
-  {
-    name: "onColumnOrderChange",
-    type: "(event: ColumnOrderEvent) => void",
-    description: "Called once when the user drops a column somewhere new.",
-  },
-  {
-    name: "selectable",
-    type: "{ rows?, columns?, cells? }",
-    default: "all off",
-    description:
-      "Which parts of the grid the user may select, and how many of each. Off by default: selection claims the click.",
-  },
-  {
-    name: "defaultRowSelection / defaultColumnSelection",
-    type: "SelectionState",
-    description: "Row / column ids selected to start with. Uncontrolled.",
-  },
-  {
-    name: "defaultCellSelection",
-    type: "CellSelectionState",
-    description: "The cell selected to start with. Uncontrolled.",
-  },
-];
-
-<PropsTable rows={propRows} />
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `columns` | `readonly ColumnDefinition<Row>[]` | | Columns to render. Falls back to defineColumnsFromRows(dataSource) when omitted. |
+| `dataSource` | `readonly Row[]` | | The rows to render. |
+| `getRowId` | `(row: Row, index: number) => string` | `row position` | A row's stable identity, for state keyed by it. Give one for data that sorts, filters, or pages. |
+| `label` | `string` | | The grid's accessible name, announced when it takes focus — without one a screen reader announces only "grid". |
+| `labelledBy` | `string` | | The id of an element naming the grid, for a heading already on the page. Takes precedence over label. |
+| `borders` | `"horizontal" \| "vertical" \| "all" \| "none"` | | Which cell borders to draw. |
+| `hoverable` | `{ rows?, columns?, cells? }` | | Which hover highlighting to enable. |
+| `resizableColumns` | `boolean` | `false` | Whether columns can be dragged wider, unless a column says otherwise. |
+| `reorderableColumns` | `boolean` | `false` | Whether columns can be dragged into a new position. |
+| `resizeMode` | `"fit" \| "fixed"` | `"fit"` | Whether columns fill the grid's width or sit at their own. |
+| `defaultColumnSizing` | `ColumnSizingState` | | Column widths to start from, keyed by column id. Uncontrolled. |
+| `defaultColumnOrder` | `readonly string[]` | | Column ids in the order to start in. Uncontrolled. |
+| `columnSizeDefaults` | `Partial<ColumnSizeDefaults>` | | Sizes applied to columns that do not set their own. |
+| `onColumnResize` | `(event: ColumnResizeEvent) => void` | | Called as the user resizes a column: continuously with phase "move", once with "end". |
+| `onColumnOrderChange` | `(event: ColumnOrderEvent) => void` | | Called once when the user drops a column somewhere new. |
+| `selectable` | `{ rows?, columns?, cells? }` | `all off` | Which parts of the grid the user may select, and how many of each. Off by default: selection claims the click. |
+| `defaultRowSelection / defaultColumnSelection` | `SelectionState` | | Row / column ids selected to start with. Uncontrolled. |
+| `defaultCellSelection` | `CellSelectionState` | | The cell selected to start with. Uncontrolled. |
 
 ## Keyboard & pointer interactions
 

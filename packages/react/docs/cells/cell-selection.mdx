@@ -23,30 +23,9 @@ selectable.cells takes only false or "single": a cell addresses one value, so th
 
 ## Props
 
-export const propRows = [
-  {
-    name: "selectable.cells",
-    type: 'false | "single"',
-    default: "false",
-    description:
-      'How many cells the user may select at once — no "multiple": a cell addresses one value, so there is no range to take.',
-  },
-  {
-    name: "defaultCellSelection",
-    type: "CellSelectionState",
-    description: "The cell selected to start with. Uncontrolled.",
-  },
-  {
-    name: "onCellSelect / onCellDeselect",
-    type: "(event: CellSelectEvent) => void",
-    description: "Once for the cell selected, once for the cell deselected.",
-  },
-  {
-    name: "onCellSelectionChange",
-    type: "(event: CellSelectionChangeEvent) => void",
-    description:
-      "Once per change with what was selected and what was deselected — one interaction can fill both, since moving between cells deselects and selects at once.",
-  },
-];
-
-<PropsTable rows={propRows} />
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `selectable.cells` | `false \| "single"` | `false` | How many cells the user may select at once — no "multiple": a cell addresses one value, so there is no range to take. |
+| `defaultCellSelection` | `CellSelectionState` | | The cell selected to start with. Uncontrolled. |
+| `onCellSelect / onCellDeselect` | `(event: CellSelectEvent) => void` | | Once for the cell selected, once for the cell deselected. |
+| `onCellSelectionChange` | `(event: CellSelectionChangeEvent) => void` | | Once per change with what was selected and what was deselected — one interaction can fill both, since moving between cells deselects and selects at once. |
