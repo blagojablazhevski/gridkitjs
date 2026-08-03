@@ -1,4 +1,8 @@
-import { useState, type PointerEvent as ReactPointerEvent } from "react";
+import {
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import {
   movesColumn,
   resolveDropBefore,
@@ -37,6 +41,14 @@ export interface ColumnDragApi<Row> {
   ) => void;
   /** Moves a column one place left (`-1`) or right (`1`). */
   moveByKeyboard: (entry: ResolvedColumn<Row>, direction: -1 | 1) => void;
+  /**
+   * Whether the gesture that just ended was a drag rather than a click, for a
+   * header that has something of its own to do with a click.
+   *
+   * Reading it clears it, so that a press which never opened a drag at all —
+   * on a column that cannot be reordered — does not see the last one's answer.
+   */
+  justDragged: () => boolean;
 }
 
 /**
@@ -69,6 +81,13 @@ export default function useColumnDrag<Row>({
   const [draggedColumnId, setDraggedColumnId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
   const [ghostTransform, setGhostTransform] = useState<string | null>(null);
+  const dragged = useRef(false);
+
+  function justDragged(): boolean {
+    const answer = dragged.current;
+    dragged.current = false;
+    return answer;
+  }
 
   function startDrag(
     entry: ResolvedColumn<Row>,
@@ -97,6 +116,9 @@ export default function useColumnDrag<Row>({
           return;
         }
         dragging = true;
+        // Latched for the `click` that follows the release, which is the only
+        // thing that can tell a drag apart from a press in the same spot.
+        dragged.current = true;
         setDraggedColumnId(entry.id);
       }
 
@@ -192,5 +214,6 @@ export default function useColumnDrag<Row>({
     ghostTransform,
     startDrag,
     moveByKeyboard,
+    justDragged,
   };
 }

@@ -66,6 +66,10 @@ export interface CellTemplateContext<Row> {
    * within the page; an index into the whole dataset would be a second field.
    */
   rowIndex: number;
+  /** This row's id, as `resolveRowId` settled it. */
+  rowId: string;
+  /** Whether this row is selected, so a template can style itself to match. */
+  selected: boolean;
 }
 
 /**
@@ -252,4 +256,163 @@ export type DropSide = "before" | "after";
 export interface ColumnOrderEvent {
   readonly columnId: string;
   readonly order: ColumnOrderState;
+}
+
+/**
+ * Ids selected, in the order they were selected — so the most recent is last,
+ * and a consumer wanting only that reads `at(-1)` rather than tracking it
+ * alongside.
+ *
+ * Ordered rather than a keyed record for that reason alone; a render layer
+ * that needs lookups builds a `Set` from it. Rows and columns share the type:
+ * they are both a list of ids, and the state they live in already names which.
+ */
+export type SelectionState = readonly string[];
+
+/**
+ * How much of a member may be selected at once. `false` rather than an absent
+ * key so that turning selection off for one member reads the same as never
+ * having enabled it.
+ */
+export type SelectionMode = false | "single" | "multiple";
+
+/**
+ * The modes a cell may take. A cell addresses one value, so it has no
+ * `"multiple"` — a range of cells is a different feature, with a rectangle
+ * rather than a list behind it.
+ */
+export type CellSelectionMode = false | "single";
+
+/**
+ * Which parts of the grid the user may select, and how many of each.
+ *
+ * Off by default, unlike `HoverableConfig`: selection claims the click, which
+ * a grid that only displays data should not do.
+ */
+export interface SelectableConfig {
+  rows?: SelectionMode | undefined;
+  columns?: SelectionMode | undefined;
+  cells?: CellSelectionMode | undefined;
+}
+
+/** The address of one cell: which row, and which column within it. */
+export interface SelectedCellRef {
+  readonly rowId: string;
+  readonly columnId: string;
+}
+
+/** The one selected cell, or `null` for none. */
+export type CellSelectionState = SelectedCellRef | null;
+
+/**
+ * What changed between two selections. Ids rather than resolved members, so
+ * that the transform producing it stays free of the data it selects from.
+ */
+export interface SelectionDiff {
+  readonly added: readonly string[];
+  readonly removed: readonly string[];
+}
+
+/**
+ * A row paired with the identity and position it renders under — the row
+ * counterpart to `ResolvedColumn`, and resolved once for the same reason: so
+ * no part of the grid works out a row's id for itself.
+ *
+ * It is also what the selection callbacks report, so a handler reads the row
+ * itself rather than an id it has to look up.
+ */
+export interface ResolvedRow<Row> {
+  readonly rowId: string;
+  readonly row: Row;
+  /** Position among the rows as rendered, matching `CellTemplateContext`. */
+  readonly rowIndex: number;
+}
+
+/**
+ * A selected column. Carries the resolved column rather than the bare
+ * definition, so a handler reads the width and label the user actually
+ * clicked rather than what the definition asked for.
+ */
+export interface SelectedColumn<Row, Node = string> {
+  readonly columnId: string;
+  readonly column: ResolvedColumn<Row, Node>;
+  /** Position among the columns as displayed, so after any reorder. */
+  readonly columnIndex: number;
+}
+
+/** A selected cell, resolved down to the value it shows. */
+export interface SelectedCell<Row, Node = string> {
+  readonly rowId: string;
+  readonly columnId: string;
+  readonly row: Row;
+  readonly column: ResolvedColumn<Row, Node>;
+  readonly rowIndex: number;
+  readonly columnIndex: number;
+  /** Read off the column's field path — the value a `cellTemplate` receives. */
+  readonly value: unknown;
+}
+
+/** Reports one row selected or deselected. */
+export interface RowSelectEvent<Row> {
+  readonly row: ResolvedRow<Row>;
+  readonly selection: SelectionState;
+}
+
+/**
+ * Reports every row one interaction selected or deselected. Fires once for a
+ * range that `RowSelectEvent` reports one row at a time.
+ */
+export interface RowsSelectEvent<Row> {
+  readonly rows: readonly ResolvedRow<Row>[];
+  readonly selection: SelectionState;
+}
+
+/**
+ * Reports a row selection change whole: what it gained, what it lost, and
+ * everything it now holds. The one to persist from.
+ */
+export interface RowSelectionChangeEvent<Row> {
+  readonly added: readonly ResolvedRow<Row>[];
+  readonly removed: readonly ResolvedRow<Row>[];
+  /** Every selected row, not only what this interaction changed. */
+  readonly selected: readonly ResolvedRow<Row>[];
+  readonly selection: SelectionState;
+}
+
+/** Reports one column selected or deselected. */
+export interface ColumnSelectEvent<Row, Node = string> {
+  readonly column: SelectedColumn<Row, Node>;
+  readonly selection: SelectionState;
+}
+
+/** Reports every column one interaction selected or deselected. */
+export interface ColumnsSelectEvent<Row, Node = string> {
+  readonly columns: readonly SelectedColumn<Row, Node>[];
+  readonly selection: SelectionState;
+}
+
+/** Reports a column selection change whole. The one to persist from. */
+export interface ColumnSelectionChangeEvent<Row, Node = string> {
+  readonly added: readonly SelectedColumn<Row, Node>[];
+  readonly removed: readonly SelectedColumn<Row, Node>[];
+  /** Every selected column, not only what this interaction changed. */
+  readonly selected: readonly SelectedColumn<Row, Node>[];
+  readonly selection: SelectionState;
+}
+
+/** Reports the cell selected or deselected. */
+export interface CellSelectEvent<Row, Node = string> {
+  readonly cell: SelectedCell<Row, Node>;
+  readonly selection: CellSelectionState;
+}
+
+/**
+ * Reports a cell selection change whole. Both fields are nullable and one
+ * interaction can fill both — moving between cells deselects and selects at
+ * once.
+ */
+export interface CellSelectionChangeEvent<Row, Node = string> {
+  readonly selected: SelectedCell<Row, Node> | null;
+  readonly deselected: SelectedCell<Row, Node> | null;
+  readonly selection: CellSelectionState;
 }

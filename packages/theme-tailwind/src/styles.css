@@ -23,6 +23,8 @@
   --gridkit-fg: oklch(0.21 0.01 250);
   --gridkit-fg-muted: oklch(0.55 0.015 250);
   --gridkit-accent: oklch(0.6 0.17 255);
+  --gridkit-selected: oklch(0.94 0.03 255);
+  --gridkit-selected-strong: oklch(0.9 0.05 255);
 }
 
 .dark {
@@ -35,6 +37,8 @@
   --gridkit-fg: oklch(0.97 0.003 250);
   --gridkit-fg-muted: oklch(0.7 0.015 250);
   --gridkit-accent: oklch(0.7 0.15 255);
+  --gridkit-selected: oklch(0.32 0.05 255);
+  --gridkit-selected-strong: oklch(0.38 0.07 255);
 }
 
 /*
@@ -52,6 +56,8 @@
   --color-fg: var(--gridkit-fg);
   --color-fg-muted: var(--gridkit-fg-muted);
   --color-accent: var(--gridkit-accent);
+  --color-selected: var(--gridkit-selected);
+  --color-selected-strong: var(--gridkit-selected-strong);
 }
 
 /*
@@ -65,6 +71,26 @@
    */
   .gridkit-data-grid-viewport {
     overflow-x: auto;
+  }
+
+  /*
+   * Read but not seen — the grid's live region, which reports a reorder or a
+   * resize that only a sighted user could otherwise notice.
+   *
+   * Clipped to nothing rather than hidden with `display: none` or
+   * `visibility: hidden`, either of which would take it out of the
+   * accessibility tree along with the announcement.
+   */
+  .gridkit-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border-width: 0;
   }
 
   /*
@@ -137,21 +163,33 @@
    * `box-shadow` rather than `border-right`: under `borders="none"` there is no
    * border to recolour, and adding one would shift the cell's content by a
    * pixel mid-drag.
-   *
-   * Focus gets the same line as far as CSS can reach — the handle is tabbable
-   * and resizes with the arrow keys, so it has to say which edge it is on.
    */
   .gridkit-data-grid .header-cell.is-resizing,
-  .gridkit-data-grid .grid-cell.is-resizing,
-  .gridkit-data-grid .header-cell:has(.header-resize-handle:focus-visible) {
+  .gridkit-data-grid .grid-cell.is-resizing {
     box-shadow: inset -2px 0 0 0 var(--gridkit-hover-line);
   }
 
   /*
-   * A reorderable header is the grab zone for its own drag, so a press on it
-   * must not select the label instead.
+   * The grid is one tab stop and the arrow keys move within it, so the focused
+   * cell is the only sign of where that stop currently is — without this ring a
+   * keyboard user is navigating blind.
+   *
+   * Inset because the viewport clips its overflow: an outline drawn outwards
+   * would be cut off on the first and last columns.
    */
-  .gridkit-data-grid .header-cell[tabindex] {
+  .gridkit-data-grid .header-cell:focus-visible,
+  .gridkit-data-grid .grid-cell:focus-visible {
+    outline: 2px solid var(--gridkit-accent);
+    outline-offset: -2px;
+  }
+
+  /*
+   * A reorderable header is the grab zone for its own drag, so a press on it
+   * must not select the label instead. Asked for by name: every header is
+   * focusable now that the grid roves one tab stop, so a `tabindex` no longer
+   * distinguishes the ones that drag.
+   */
+  .gridkit-data-grid .header-cell.is-reorderable {
     cursor: grab;
     touch-action: none;
     user-select: none;
@@ -231,8 +269,7 @@
    * Unscoped by `no-hover-columns`: the grip is a resize affordance, not part
    * of the hover styling a consumer can turn off.
    */
-  .gridkit-data-grid .grid-header .header-cell:hover .header-resize-grip,
-  .gridkit-data-grid .header-resize-handle:focus-visible .header-resize-grip {
+  .gridkit-data-grid .grid-header .header-cell:hover .header-resize-grip {
     opacity: 1;
   }
 
@@ -255,6 +292,57 @@
 
   .gridkit-data-grid:not(.no-hover-rows) .grid-row:hover {
     background-color: var(--gridkit-surface-muted);
+  }
+
+  /*
+   * Selection, after the hover rules so that a selected row hovered stays
+   * selected — the two would otherwise be the same colour, since hover already
+   * claims `--gridkit-surface-muted`.
+   *
+   * A selected cell wins over its row and its column: it is the more specific
+   * thing the user pointed at, and the rule below it says so by ordering.
+   */
+  .gridkit-data-grid .grid-row.is-selected,
+  .gridkit-data-grid .header-cell.is-selected,
+  .gridkit-data-grid .grid-cell.is-selected {
+    background-color: var(--gridkit-selected);
+  }
+
+  .gridkit-data-grid:not(.no-hover-rows) .grid-row.is-selected:hover,
+  .gridkit-data-grid:not(.no-hover-cells) .grid-cell.is-selected:hover,
+  .gridkit-data-grid:not(.no-hover-columns)
+    .grid-header
+    .header-cell.is-selected:hover {
+    background-color: var(--gridkit-selected-strong);
+  }
+
+  /*
+   * Only where a press does something. A grid that merely displays data keeps
+   * the default cursor, which is what says it is not interactive.
+   *
+   * A reorderable header keeps its `grab`: it is the rarer affordance and the
+   * one a user would not otherwise guess, and its header still selects.
+   */
+  .gridkit-data-grid.selectable-rows .grid-row,
+  .gridkit-data-grid.selectable-cells .grid-cell,
+  .gridkit-data-grid.selectable-columns
+    .grid-header
+    .header-cell:not(.is-reorderable) {
+    cursor: pointer;
+  }
+
+  /*
+   * A Shift-click takes a range of rows, and would otherwise take a range of
+   * text along with it — leaving the browser's own highlight smeared across
+   * every cell it crossed.
+   *
+   * The cost is that the text no longer drags out to be copied, which is why
+   * this is scoped to a grid that asked for selection rather than applied to
+   * all of them.
+   */
+  .gridkit-data-grid.selectable-rows .grid-row,
+  .gridkit-data-grid.selectable-cells .grid-cell {
+    user-select: none;
   }
 
   /* Horizontal borders */

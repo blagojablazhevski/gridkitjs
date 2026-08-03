@@ -5,6 +5,7 @@ import {
   fitColumnsToWidth,
   moveColumnBefore,
   resolveColumnWidths,
+  resolveRowId,
   totalColumnWidth,
   type ColumnDefinition as CoreColumnDefinition,
   type ResolvedColumn as CoreResolvedColumn,
@@ -13,12 +14,25 @@ import {
   type ColumnResizeEvent,
   type ColumnSizeDefaults,
   type ColumnSizingState,
+  type ResolvedRow,
+  type CellSelectionState,
+  type SelectableConfig,
+  type SelectedCell as CoreSelectedCell,
+  type SelectedColumn as CoreSelectedColumn,
+  type SelectionState,
+  type CellSelectEvent as CoreCellSelectEvent,
+  type CellSelectionChangeEvent as CoreCellSelectionChangeEvent,
+  type ColumnSelectEvent as CoreColumnSelectEvent,
+  type ColumnSelectionChangeEvent as CoreColumnSelectionChangeEvent,
+  type ColumnsSelectEvent as CoreColumnsSelectEvent,
 } from "@gridkitjs/core";
 import GridHeader from "./components/GridHeader";
 import GridBody from "./components/GridBody";
 import useColumnDrag, { type DropTarget } from "./useColumnDrag";
 import useColumnResize from "./useColumnResize";
 import useElementWidth from "./useElementWidth";
+import useGridNavigation, { HEADER_ROW } from "./useGridNavigation";
+import useGridSelection, { type SelectionCallbacks } from "./useGridSelection";
 
 /**
  * A column whose header and cells may render arbitrary React content.
@@ -29,6 +43,28 @@ export type ColumnDefinition<Row> = CoreColumnDefinition<Row, ReactNode>;
 
 /** A column paired with the width it renders at. */
 export type ResolvedColumn<Row> = CoreResolvedColumn<Row, ReactNode>;
+
+/**
+ * The selection payloads, bound to React's node type for the same reason
+ * `ColumnDefinition` is: they carry a resolved column, whose label is whatever
+ * a `headerTemplate` returned.
+ *
+ * The row payloads name no node type at all and so are re-exported from
+ * `@gridkitjs/core` as they are.
+ */
+export type SelectedColumn<Row> = CoreSelectedColumn<Row, ReactNode>;
+export type SelectedCell<Row> = CoreSelectedCell<Row, ReactNode>;
+export type ColumnSelectEvent<Row> = CoreColumnSelectEvent<Row, ReactNode>;
+export type ColumnsSelectEvent<Row> = CoreColumnsSelectEvent<Row, ReactNode>;
+export type ColumnSelectionChangeEvent<Row> = CoreColumnSelectionChangeEvent<
+  Row,
+  ReactNode
+>;
+export type CellSelectEvent<Row> = CoreCellSelectEvent<Row, ReactNode>;
+export type CellSelectionChangeEvent<Row> = CoreCellSelectionChangeEvent<
+  Row,
+  ReactNode
+>;
 
 export type Borders = "horizontal" | "vertical" | "all" | "none";
 
@@ -48,11 +84,39 @@ export interface HoverableConfig {
   cells?: boolean;
 }
 
-export interface DataGridProps<Row> {
+export interface DataGridProps<Row> extends SelectionCallbacks<Row> {
   columns?: readonly ColumnDefinition<Row>[] | undefined;
   dataSource?: readonly Row[] | undefined;
+  /**
+   * A row's stable identity, for state keyed by it. Defaults to the row's
+   * position, which is enough for a static grid but ties that state to where a
+   * row sits rather than to the row — so anything sorting, filtering or paging
+   * its data should give one.
+   *
+   * Called for every row on every change to `dataSource`, so it should be
+   * cheap and stable; an inline arrow is fine, one that re-reads the data is
+   * not.
+   */
+  getRowId?: ((row: Row, index: number) => string) | undefined;
   borders?: Borders | undefined;
   hoverable?: HoverableConfig | undefined;
+  /**
+   * Which parts of the grid the user may select, and how many of each —
+   * `{ rows: "multiple", cells: "single" }`. A cell addresses one value, so it
+   * has no `"multiple"`.
+   *
+   * Off by default, unlike `hoverable`: selection claims the click, which a
+   * grid that only displays data should not do. Give `getRowId` alongside it
+   * for data that sorts, filters or pages, or a selection follows the position
+   * rather than the row.
+   */
+  selectable?: SelectableConfig | undefined;
+  /** Row ids selected to start with, keyed as `getRowId` resolves them. Uncontrolled. */
+  defaultRowSelection?: SelectionState | undefined;
+  /** Column ids selected to start with. Uncontrolled. */
+  defaultColumnSelection?: SelectionState | undefined;
+  /** The cell selected to start with. Uncontrolled. */
+  defaultCellSelection?: CellSelectionState | undefined;
   /** Whether columns can be dragged wider, unless a column says otherwise. */
   resizableColumns?: boolean | undefined;
   /**
@@ -90,13 +154,28 @@ export interface DataGridProps<Row> {
    * the order as it was does not call it.
    */
   onColumnOrderChange?: ((event: ColumnOrderEvent) => void) | undefined;
+  /**
+   * The grid's accessible name, announced when it takes focus. A grid without
+   * one is read only as "grid", which says nothing about which grid.
+   */
+  label?: string | undefined;
+  /**
+   * The id of an element naming the grid, for a heading already on the page.
+   * Takes precedence over `label`, as `aria-labelledby` does.
+   */
+  labelledBy?: string | undefined;
 }
 
 export function DataGridComponent<Row>({
   dataSource,
   columns,
+  getRowId,
   borders,
   hoverable,
+  selectable,
+  defaultRowSelection,
+  defaultColumnSelection,
+  defaultCellSelection,
   resizableColumns = false,
   reorderableColumns = false,
   resizeMode = "fit",
@@ -105,6 +184,9 @@ export function DataGridComponent<Row>({
   columnSizeDefaults,
   onColumnResize,
   onColumnOrderChange,
+  label,
+  labelledBy,
+  ...callbacks
 }: DataGridProps<Row>) {
   const hoverRows = hoverable?.rows ?? true;
   const hoverColumns = hoverable?.columns ?? true;
@@ -118,6 +200,36 @@ export function DataGridComponent<Row>({
   );
   const [order, setOrder] = useState<ColumnOrderState>(
     defaultColumnOrder ?? [],
+  );
+  const [announcement, setAnnouncement] = useState("");
+  const [rowSelection, setRowSelection] = useState<SelectionState>(
+    defaultRowSelection ?? [],
+  );
+  const [columnSelection, setColumnSelection] = useState<SelectionState>(
+    defaultColumnSelection ?? [],
+  );
+  const [cellSelection, setCellSelection] = useState<CellSelectionState>(
+    defaultCellSelection ?? null,
+  );
+
+  /**
+   * The rows as rendered, each carrying the id everything downstream keys it
+   * by. Resolved once here rather than per consumer so a row's id cannot come
+   * out differently in two places — the same reason `resolveColumnWidths` runs
+   * once ahead of the header and the body.
+   *
+   * An array rather than a map keyed by id: two rows given the same id is a
+   * caller's mistake, and one that should render twice and look wrong rather
+   * than silently lose a row.
+   */
+  const rows = useMemo<readonly ResolvedRow<Row>[]>(
+    () =>
+      dataSource?.map((row, rowIndex) => ({
+        rowId: resolveRowId(row, rowIndex, getRowId),
+        row,
+        rowIndex,
+      })) ?? [],
+    [dataSource, getRowId],
   );
 
   const definedColumns = useMemo<readonly ColumnDefinition<Row>[]>(() => {
@@ -160,12 +272,54 @@ export function DataGridComponent<Row>({
     reorderableColumns,
   ]);
 
+  /**
+   * What a column is called in an announcement. `label` carries whatever a
+   * `headerTemplate` returned, which need not be text at all, so the field
+   * path stands in whenever it is not.
+   */
+  function columnName(columnId: string): string {
+    const entry = resolved.find((candidate) => candidate.id === columnId);
+    if (entry === undefined) {
+      return columnId;
+    }
+    return typeof entry.label === "string" ? entry.label : entry.column.field;
+  }
+
+  /**
+   * Reports a change no visual cue can carry to a screen reader. Held as state
+   * rather than written to the DOM directly so React owns the one element the
+   * live region watches.
+   */
+  function announce(message: string): void {
+    setAnnouncement(message);
+  }
+
+  /**
+   * Wrapped rather than announced from the resize hook, which reports the
+   * continuous `"move"` phase as well — a live region given every frame of a
+   * drag says nothing an assistive technology can keep up with.
+   */
+  function handleColumnResize(event: ColumnResizeEvent): void {
+    onColumnResize?.(event);
+    if (event.phase === "end") {
+      announce(
+        `${columnName(event.columnId)}, ${String(Math.round(event.width))} pixels wide`,
+      );
+    }
+  }
+
   const resize = useColumnResize<Row>({
     tableRef,
     sizing,
     setSizing,
     columnSizeDefaults,
-    onColumnResize,
+    onColumnResize: handleColumnResize,
+  });
+
+  const nav = useGridNavigation({
+    tableRef,
+    rowCount: rows.length,
+    columnCount: resolved.length,
   });
 
   /**
@@ -190,25 +344,98 @@ export function DataGridComponent<Row>({
     if (next === displayedIds) {
       return;
     }
+    const position = next.indexOf(movedId);
     setOrder(next);
     onColumnOrderChange?.({ columnId: movedId, order: next });
+    announce(
+      `${columnName(movedId)}, column ${String(position + 1)} of ${String(next.length)}`,
+    );
+    /**
+     * The tab stop travels with the column. React reorders the headers by key,
+     * so the browser's focus stays on the moved one by itself — without this
+     * the stop would be left on whichever column took its index, and the next
+     * arrow key would appear to do nothing.
+     */
+    nav.focusCell(HEADER_ROW, position);
   }
 
   const drag = useColumnDrag<Row>({ order: displayedIds, onDrop: handleDrop });
+
+  const selection = useGridSelection<Row>({
+    rows,
+    columns: resolved,
+    selectable,
+    rowSelection,
+    setRowSelection,
+    columnSelection,
+    setColumnSelection,
+    cellSelection,
+    setCellSelection,
+    callbacks,
+    announce,
+  });
+
+  const multiselectable =
+    selection.rowMode === "multiple" || selection.columnMode === "multiple";
 
   return (
     <div className="gridkit-data-grid-viewport" ref={viewportRef}>
       <table
         ref={tableRef}
+        /*
+         * `role="grid"` rather than the table's own semantics: it is what makes
+         * the arrow keys a navigation the grid owns, and later what lets a row
+         * report whether it is selected. It obliges the single tab stop
+         * `useGridNavigation` keeps.
+         */
+        role="grid"
+        // The header is a row too, and counted from one.
+        aria-rowcount={rows.length + 1}
+        aria-colcount={resolved.length}
+        {...(multiselectable && { "aria-multiselectable": true })}
+        {...(labelledBy !== undefined && { "aria-labelledby": labelledBy })}
+        {...(labelledBy === undefined &&
+          label !== undefined && { "aria-label": label })}
+        onKeyDown={(event) => {
+          /*
+           * The two keys that address the grid rather than a cell, and so are
+           * caught here where everything bubbles to rather than in each of
+           * them.
+           */
+          if (event.key === "Escape") {
+            // A gesture in flight has its own use for Escape — cancelling —
+            // and gets it first.
+            if (drag.draggedColumnId !== null || resize.activeColumnId !== null)
+              return;
+            selection.clear();
+            return;
+          }
+          if (
+            (event.ctrlKey || event.metaKey) &&
+            (event.key === "a" || event.key === "A")
+          ) {
+            // Left to the browser unless the grid has something to do with it,
+            // so a grid without multiple rows does not swallow select-all.
+            if (selection.rowMode !== "multiple") return;
+            event.preventDefault();
+            selection.selectAllRows();
+          }
+        }}
         // Widths are only honoured exactly when the table is as wide as its
         // columns; at `100%` the fixed layout redistributes the difference.
         style={{ width: totalColumnWidth(resolved) }}
         className={[
           "gridkit-data-grid",
           borders ? `borders-${borders}` : "",
+          // Hover is on by default and selection off, so one set of classes
+          // turns styling off and the other turns it on. The polarity differs
+          // because the defaults do.
           hoverRows ? "" : "no-hover-rows",
           hoverColumns ? "" : "no-hover-columns",
           hoverCells ? "" : "no-hover-cells",
+          selection.rowMode === false ? "" : "selectable-rows",
+          selection.columnMode === false ? "" : "selectable-columns",
+          selection.cellMode === false ? "" : "selectable-cells",
         ]
           .filter(Boolean)
           .join(" ")}
@@ -218,13 +445,28 @@ export function DataGridComponent<Row>({
             <col key={entry.id} style={{ width: entry.width }} />
           ))}
         </colgroup>
-        <GridHeader<Row> columns={resolved} resize={resize} drag={drag} />
+        <GridHeader<Row>
+          columns={resolved}
+          resize={resize}
+          drag={drag}
+          nav={nav}
+          selection={selection}
+        />
         <GridBody<Row>
           columns={resolved}
-          dataSource={dataSource}
+          rows={rows}
           activeColumnId={resize.activeColumnId}
+          nav={nav}
+          selection={selection}
         />
       </table>
+      {/*
+       * Outside the table, which admits no `div`, and polite so it waits for a
+       * pause rather than cutting across what the user is already hearing.
+       */}
+      <div className="gridkit-sr-only" role="status" aria-live="polite">
+        {announcement}
+      </div>
     </div>
   );
 }
