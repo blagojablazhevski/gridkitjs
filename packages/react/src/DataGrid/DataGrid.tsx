@@ -15,6 +15,16 @@ import {
   type ColumnSizeDefaults,
   type ColumnSizingState,
   type ResolvedRow,
+  type CellSelectionState,
+  type SelectableConfig,
+  type SelectedCell as CoreSelectedCell,
+  type SelectedColumn as CoreSelectedColumn,
+  type SelectionState,
+  type CellSelectEvent as CoreCellSelectEvent,
+  type CellSelectionChangeEvent as CoreCellSelectionChangeEvent,
+  type ColumnSelectEvent as CoreColumnSelectEvent,
+  type ColumnSelectionChangeEvent as CoreColumnSelectionChangeEvent,
+  type ColumnsSelectEvent as CoreColumnsSelectEvent,
 } from "@gridkitjs/core";
 import GridHeader from "./components/GridHeader";
 import GridBody from "./components/GridBody";
@@ -22,6 +32,7 @@ import useColumnDrag, { type DropTarget } from "./useColumnDrag";
 import useColumnResize from "./useColumnResize";
 import useElementWidth from "./useElementWidth";
 import useGridNavigation, { HEADER_ROW } from "./useGridNavigation";
+import useGridSelection, { type SelectionCallbacks } from "./useGridSelection";
 
 /**
  * A column whose header and cells may render arbitrary React content.
@@ -32,6 +43,28 @@ export type ColumnDefinition<Row> = CoreColumnDefinition<Row, ReactNode>;
 
 /** A column paired with the width it renders at. */
 export type ResolvedColumn<Row> = CoreResolvedColumn<Row, ReactNode>;
+
+/**
+ * The selection payloads, bound to React's node type for the same reason
+ * `ColumnDefinition` is: they carry a resolved column, whose label is whatever
+ * a `headerTemplate` returned.
+ *
+ * The row payloads name no node type at all and so are re-exported from
+ * `@gridkitjs/core` as they are.
+ */
+export type SelectedColumn<Row> = CoreSelectedColumn<Row, ReactNode>;
+export type SelectedCell<Row> = CoreSelectedCell<Row, ReactNode>;
+export type ColumnSelectEvent<Row> = CoreColumnSelectEvent<Row, ReactNode>;
+export type ColumnsSelectEvent<Row> = CoreColumnsSelectEvent<Row, ReactNode>;
+export type ColumnSelectionChangeEvent<Row> = CoreColumnSelectionChangeEvent<
+  Row,
+  ReactNode
+>;
+export type CellSelectEvent<Row> = CoreCellSelectEvent<Row, ReactNode>;
+export type CellSelectionChangeEvent<Row> = CoreCellSelectionChangeEvent<
+  Row,
+  ReactNode
+>;
 
 export type Borders = "horizontal" | "vertical" | "all" | "none";
 
@@ -51,7 +84,7 @@ export interface HoverableConfig {
   cells?: boolean;
 }
 
-export interface DataGridProps<Row> {
+export interface DataGridProps<Row> extends SelectionCallbacks<Row> {
   columns?: readonly ColumnDefinition<Row>[] | undefined;
   dataSource?: readonly Row[] | undefined;
   /**
@@ -67,6 +100,23 @@ export interface DataGridProps<Row> {
   getRowId?: ((row: Row, index: number) => string) | undefined;
   borders?: Borders | undefined;
   hoverable?: HoverableConfig | undefined;
+  /**
+   * Which parts of the grid the user may select, and how many of each —
+   * `{ rows: "multiple", cells: "single" }`. A cell addresses one value, so it
+   * has no `"multiple"`.
+   *
+   * Off by default, unlike `hoverable`: selection claims the click, which a
+   * grid that only displays data should not do. Give `getRowId` alongside it
+   * for data that sorts, filters or pages, or a selection follows the position
+   * rather than the row.
+   */
+  selectable?: SelectableConfig | undefined;
+  /** Row ids selected to start with, keyed as `getRowId` resolves them. Uncontrolled. */
+  defaultRowSelection?: SelectionState | undefined;
+  /** Column ids selected to start with. Uncontrolled. */
+  defaultColumnSelection?: SelectionState | undefined;
+  /** The cell selected to start with. Uncontrolled. */
+  defaultCellSelection?: CellSelectionState | undefined;
   /** Whether columns can be dragged wider, unless a column says otherwise. */
   resizableColumns?: boolean | undefined;
   /**
@@ -122,6 +172,10 @@ export function DataGridComponent<Row>({
   getRowId,
   borders,
   hoverable,
+  selectable,
+  defaultRowSelection,
+  defaultColumnSelection,
+  defaultCellSelection,
   resizableColumns = false,
   reorderableColumns = false,
   resizeMode = "fit",
@@ -132,6 +186,7 @@ export function DataGridComponent<Row>({
   onColumnOrderChange,
   label,
   labelledBy,
+  ...callbacks
 }: DataGridProps<Row>) {
   const hoverRows = hoverable?.rows ?? true;
   const hoverColumns = hoverable?.columns ?? true;
@@ -147,6 +202,15 @@ export function DataGridComponent<Row>({
     defaultColumnOrder ?? [],
   );
   const [announcement, setAnnouncement] = useState("");
+  const [rowSelection, setRowSelection] = useState<SelectionState>(
+    defaultRowSelection ?? [],
+  );
+  const [columnSelection, setColumnSelection] = useState<SelectionState>(
+    defaultColumnSelection ?? [],
+  );
+  const [cellSelection, setCellSelection] = useState<CellSelectionState>(
+    defaultCellSelection ?? null,
+  );
 
   /**
    * The rows as rendered, each carrying the id everything downstream keys it
@@ -297,6 +361,23 @@ export function DataGridComponent<Row>({
 
   const drag = useColumnDrag<Row>({ order: displayedIds, onDrop: handleDrop });
 
+  const selection = useGridSelection<Row>({
+    rows,
+    columns: resolved,
+    selectable,
+    rowSelection,
+    setRowSelection,
+    columnSelection,
+    setColumnSelection,
+    cellSelection,
+    setCellSelection,
+    callbacks,
+    announce,
+  });
+
+  const multiselectable =
+    selection.rowMode === "multiple" || selection.columnMode === "multiple";
+
   return (
     <div className="gridkit-data-grid-viewport" ref={viewportRef}>
       <table
@@ -311,18 +392,50 @@ export function DataGridComponent<Row>({
         // The header is a row too, and counted from one.
         aria-rowcount={rows.length + 1}
         aria-colcount={resolved.length}
+        {...(multiselectable && { "aria-multiselectable": true })}
         {...(labelledBy !== undefined && { "aria-labelledby": labelledBy })}
         {...(labelledBy === undefined &&
           label !== undefined && { "aria-label": label })}
+        onKeyDown={(event) => {
+          /*
+           * The two keys that address the grid rather than a cell, and so are
+           * caught here where everything bubbles to rather than in each of
+           * them.
+           */
+          if (event.key === "Escape") {
+            // A gesture in flight has its own use for Escape — cancelling —
+            // and gets it first.
+            if (drag.draggedColumnId !== null || resize.activeColumnId !== null)
+              return;
+            selection.clear();
+            return;
+          }
+          if (
+            (event.ctrlKey || event.metaKey) &&
+            (event.key === "a" || event.key === "A")
+          ) {
+            // Left to the browser unless the grid has something to do with it,
+            // so a grid without multiple rows does not swallow select-all.
+            if (selection.rowMode !== "multiple") return;
+            event.preventDefault();
+            selection.selectAllRows();
+          }
+        }}
         // Widths are only honoured exactly when the table is as wide as its
         // columns; at `100%` the fixed layout redistributes the difference.
         style={{ width: totalColumnWidth(resolved) }}
         className={[
           "gridkit-data-grid",
           borders ? `borders-${borders}` : "",
+          // Hover is on by default and selection off, so one set of classes
+          // turns styling off and the other turns it on. The polarity differs
+          // because the defaults do.
           hoverRows ? "" : "no-hover-rows",
           hoverColumns ? "" : "no-hover-columns",
           hoverCells ? "" : "no-hover-cells",
+          selection.rowMode === false ? "" : "selectable-rows",
+          selection.columnMode === false ? "" : "selectable-columns",
+          selection.cellMode === false ? "" : "selectable-cells",
         ]
           .filter(Boolean)
           .join(" ")}
@@ -337,12 +450,14 @@ export function DataGridComponent<Row>({
           resize={resize}
           drag={drag}
           nav={nav}
+          selection={selection}
         />
         <GridBody<Row>
           columns={resolved}
           rows={rows}
           activeColumnId={resize.activeColumnId}
           nav={nav}
+          selection={selection}
         />
       </table>
       {/*

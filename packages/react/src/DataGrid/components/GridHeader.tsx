@@ -4,12 +4,14 @@ import type { ResolvedColumn } from "../DataGrid";
 import type { ColumnDragApi } from "../useColumnDrag";
 import type { ColumnResizeApi } from "../useColumnResize";
 import { HEADER_ROW, type GridNavigationApi } from "../useGridNavigation";
+import { intentOf, type GridSelectionApi } from "../useGridSelection";
 
 interface GridHeaderProps<Row> {
   columns: readonly ResolvedColumn<Row>[];
   resize: ColumnResizeApi<Row>;
   drag: ColumnDragApi<Row>;
   nav: GridNavigationApi;
+  selection: GridSelectionApi;
 }
 
 export default function GridHeader<Row>({
@@ -17,6 +19,7 @@ export default function GridHeader<Row>({
   resize,
   drag,
   nav,
+  selection,
 }: GridHeaderProps<Row>) {
   const { beforeId } = drag.dropTarget ?? {};
   const draggedEntry =
@@ -37,6 +40,7 @@ export default function GridHeader<Row>({
            */
           const dropBefore = beforeId !== undefined && beforeId === entry.id;
           const dropAfter = beforeId === null && index === columns.length - 1;
+          const selected = selection.selectedColumnIds.has(entry.id);
 
           /**
            * Announced so the keys are discoverable, since neither is a
@@ -56,8 +60,30 @@ export default function GridHeader<Row>({
               data-gridkit-column={entry.id}
               aria-colindex={index + 1}
               tabIndex={nav.tabIndexFor(HEADER_ROW, index)}
+              {...(selection.columnMode !== false && {
+                "aria-selected": selected,
+              })}
               onFocus={() => {
                 nav.focusCell(HEADER_ROW, index);
+              }}
+              onClick={(event) => {
+                /*
+                 * A drag ends in a click on the header it started from, and a
+                 * resize in one on the handle inside it. Neither is the press
+                 * that selects a column, so both are shown the door here —
+                 * the drag by the distance it travelled, the resize by where
+                 * it began.
+                 */
+                if (drag.justDragged()) {
+                  return;
+                }
+                if (
+                  event.target instanceof Element &&
+                  event.target.closest(".header-resize-handle") !== null
+                ) {
+                  return;
+                }
+                selection.selectColumn(entry.id, intentOf(event));
               }}
               onKeyDown={(event) => {
                 const horizontal =
@@ -74,11 +100,26 @@ export default function GridHeader<Row>({
                   resize.nudge(entry, direction * KEYBOARD_STEP);
                   return;
                 }
+                // Space builds a selection up and Enter replaces it, as in the
+                // body. Taken either way, or Space scrolls the grid away.
+                if (event.key === " " || event.key === "Enter") {
+                  event.preventDefault();
+                  selection.selectColumn(
+                    entry.id,
+                    intentOf({
+                      ctrlKey: event.key === " " || event.ctrlKey,
+                      metaKey: event.metaKey,
+                      shiftKey: event.shiftKey,
+                    }),
+                  );
+                  return;
+                }
                 nav.onKeyDown(event);
               }}
               className={[
                 "header-cell",
                 entry.reorderable ? "is-reorderable" : "",
+                selected ? "is-selected" : "",
                 resizing ? "is-resizing" : "",
                 dragging ? "is-dragging" : "",
                 dropBefore ? "is-drop-before" : "",
