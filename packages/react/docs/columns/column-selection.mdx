@@ -22,10 +22,10 @@ selectable.columns takes false, "single", or "multiple" — off by default, sinc
 
 ## Props
 
-| Prop | Type | Default | Description |
-| --- | --- | --- | --- |
-| `selectable.columns` | `false \| "single" \| "multiple"` | `false` | How many columns the user may select at once. |
-| `defaultColumnSelection` | `SelectionState` | | Column ids selected to start with. Uncontrolled. |
-| `onColumnSelect / onColumnsSelect` | `(event) => void` | | Once per column newly selected, and once per interaction with every column it selected. |
-| `onColumnDeselect / onColumnsDeselect` | `(event) => void` | | The deselecting counterpart of each, above. |
-| `onColumnSelectionChange` | `(event: ColumnSelectionChangeEvent) => void` | | Once per change with what it added, what it removed, and everything selected after — the one to persist from. |
+| Prop                                   | Type                                          | Default | Description                                                                                                   |
+| -------------------------------------- | --------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------- |
+| `selectable.columns`                   | `false \| "single" \| "multiple"`             | `false` | How many columns the user may select at once.                                                                 |
+| `defaultColumnSelection`               | `SelectionState`                              |         | Column ids selected to start with. Uncontrolled.                                                              |
+| `onColumnSelect / onColumnsSelect`     | `(event) => void`                             |         | Once per column newly selected, and once per interaction with every column it selected.                       |
+| `onColumnDeselect / onColumnsDeselect` | `(event) => void`                             |         | The deselecting counterpart of each, above.                                                                   |
+| `onColumnSelectionChange`              | `(event: ColumnSelectionChangeEvent) => void` |         | Once per change with what it added, what it removed, and everything selected after — the one to persist from. |
