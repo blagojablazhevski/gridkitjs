@@ -4,7 +4,8 @@
 <p align="center">
   <a href="https://www.npmjs.com/package/@gridkitjs/core"><img src="https://img.shields.io/npm/v/%40gridkitjs%2Fcore?label=Core&logo=npm" alt="Core"></a>&nbsp;
   <a href="https://www.npmjs.com/package/@gridkitjs/react"><img src="https://img.shields.io/npm/v/%40gridkitjs%2Freact?label=React&logo=npm" alt="React"></a>&nbsp;
-  <a href="https://www.npmjs.com/package/@gridkitjs/theme-tailwind"><img src="https://img.shields.io/npm/v/%40gridkitjs%2Ftheme-tailwind?label=Tailwind%20Theme&logo=npm" alt="Tailwind Theme"></a>
+  <a href="https://www.npmjs.com/package/@gridkitjs/theme-tailwind"><img src="https://img.shields.io/npm/v/%40gridkitjs%2Ftheme-tailwind?label=Tailwind%20Theme&logo=npm" alt="Tailwind Theme"></a>&nbsp;
+  <a href="https://gridkitjs.com"><img src="https://img.shields.io/badge/docs-gridkitjs.com-blue" alt="Docs"></a>
 </p>
 
 ---
@@ -17,16 +18,37 @@ Grid logic lives in `@gridkitjs/core` as plain TypeScript, so it is testable
 without a DOM and reusable from a future Vue/Svelte adapter. `@gridkitjs/react`
 binds that logic to React components.
 
+## Documentation
+
+Guides and full API reference live at **[gridkitjs.com](https://gridkitjs.com)**:
+
+- [Core](https://gridkitjs.com/en/docs/core/overview) — column inference, resizing, ordering, selection
+- [React](https://gridkitjs.com/en/docs/react/overview) — components, props, events
+- [Theme (Tailwind)](https://gridkitjs.com/en/docs/theme-tailwind/overview) — palette tokens, dark mode
+
+The `.mdx` sources live in this repo under each package's `docs/` folder, but
+this repo has no docs build — they're only rendered by the separate
+`gridkit-website` repo.
+
 ## Packages
 
-| Package                     | What it is                                                            |
-| --------------------------- | --------------------------------------------------------------------- |
-| `@gridkitjs/core`           | Framework-agnostic grid logic — column resolution, alignment, sizing. |
-| `@gridkitjs/react`          | React components consuming `core`, styled with Tailwind utilities.    |
-| `@gridkitjs/theme-default`  | Plain CSS for consumers not using Tailwind. Private, unpublished.     |
-| `@gridkitjs/theme-tailwind` | Tailwind theme layer. Private, unpublished.                           |
+| Package                     | What it is                                                                                    | Docs                                                          |
+| --------------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `@gridkitjs/core`           | Framework-agnostic grid logic — column resolution, alignment, sizing.                         | [docs](https://gridkitjs.com/en/docs/core/overview)           |
+| `@gridkitjs/react`          | React components consuming `core`, styled with Tailwind utilities.                            | [docs](https://gridkitjs.com/en/docs/react/overview)          |
+| `@gridkitjs/theme-tailwind` | Tailwind theme layer — palette tokens, dark mode, grid styles.                                | [docs](https://gridkitjs.com/en/docs/theme-tailwind/overview) |
+| `@gridkitjs/theme-default`  | Plain CSS for consumers not using Tailwind. Currently an empty stub, private and unpublished. | —                                                             |
 
 `apps/playground` is a Vite app used to develop against. Private, never published.
+
+## Installation
+
+```bash
+npm install @gridkitjs/core @gridkitjs/react
+
+# Tailwind consumers additionally:
+npm install @gridkitjs/theme-tailwind
+```
 
 ## Usage
 
