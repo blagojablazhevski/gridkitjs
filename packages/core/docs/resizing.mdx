@@ -7,54 +7,16 @@ resolveColumnWidths and fitColumnsToWidth are the functions DataGridComponent ca
 
 ## Functions
 
-export const functionRows = [
-  {
-    name: "resolveColumnWidths(columns, sizing, options)",
-    type: "readonly ResolvedColumn<Row>[]",
-    description:
-      "Resolves each column's rendered width from its definition, the sizing state, and the grid's defaults.",
-  },
-  {
-    name: "fitColumnsToWidth(columns, width, sizeDefaults)",
-    type: "readonly ResolvedColumn<Row>[]",
-    description: 'Redistributes width across columns under resizeMode="fit".',
-  },
-  {
-    name: "clampColumnWidth(width, constraints)",
-    type: "number",
-    description: "Holds a width within a column's min/max bounds.",
-  },
-  {
-    name: "resolveColumnConstraints(column, sizeDefaults)",
-    type: "ColumnConstraints",
-    description: "The min/max a column may be resized between.",
-  },
-  {
-    name: "beginColumnResize(column, startWidth, startPosition, sizeDefaults)",
-    type: "ColumnResizeSession",
-    description:
-      "Opens a resize: captures the column's constraints and starting point so applying a pointer position is arithmetic on numbers alone.",
-  },
-  {
-    name: "applyColumnResize(session, position)",
-    type: "number",
-    description:
-      "The width the dragged column takes with the pointer at position.",
-  },
-  {
-    name: "sizeColumnToContent(measuredWidth, constraints)",
-    type: "number",
-    description:
-      "The width a double-click auto-fit resolves to, clamped to the column's bounds.",
-  },
-  {
-    name: "totalColumnWidth(resolved)",
-    type: "number",
-    description: "The sum of every resolved column's width.",
-  },
-];
-
-<PropsTable rows={functionRows} />
+| Function                                                             | Type                             | Description                                                                                                                         |
+| -------------------------------------------------------------------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `resolveColumnWidths(columns, sizing, options)`                      | `readonly ResolvedColumn<Row>[]` | Resolves each column's rendered width from its definition, the sizing state, and the grid's defaults.                               |
+| `fitColumnsToWidth(columns, width, sizeDefaults)`                    | `readonly ResolvedColumn<Row>[]` | Redistributes width across columns under resizeMode="fit".                                                                          |
+| `clampColumnWidth(width, constraints)`                               | `number`                         | Holds a width within a column's min/max bounds.                                                                                     |
+| `resolveColumnConstraints(column, sizeDefaults)`                     | `ColumnConstraints`              | The min/max a column may be resized between.                                                                                        |
+| `beginColumnResize(column, startWidth, startPosition, sizeDefaults)` | `ColumnResizeSession`            | Opens a resize: captures the column's constraints and starting point so applying a pointer position is arithmetic on numbers alone. |
+| `applyColumnResize(session, position)`                               | `number`                         | The width the dragged column takes with the pointer at position.                                                                    |
+| `sizeColumnToContent(measuredWidth, constraints)`                    | `number`                         | The width a double-click auto-fit resolves to, clamped to the column's bounds.                                                      |
+| `totalColumnWidth(resolved)`                                         | `number`                         | The sum of every resolved column's width.                                                                                           |
 
 ## The same logic, in the React grid
 

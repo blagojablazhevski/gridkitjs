@@ -7,84 +7,22 @@ defineColumnsFromRows inspects your row data and infers a type and alignment per
 
 ## Column definition shape
 
-export const shapeRows = [
-  {
-    name: "field",
-    type: "FieldPath<Row> | string",
-    description: 'Path to this column\'s value, e.g. "Application.Id".',
-  },
-  {
-    name: "id",
-    type: "string",
-    description: "Stable identity for sizing/order state. Defaults to field.",
-  },
-  {
-    name: "headerTemplate",
-    type: "Node | (() => Node)",
-    description: "Header content, or a function returning it at render time.",
-  },
-  {
-    name: "cellTemplate",
-    type: "(context: CellTemplateContext<Row>) => Node",
-    description: "Renders this column's cells in place of the raw value.",
-  },
-  {
-    name: "type",
-    type: "ColumnType",
-    description: 'The value type of this column\'s cells, e.g. "currency".',
-  },
-  {
-    name: "alignment",
-    type: '"left" | "center" | "right"',
-    description: "Alignment of this column's cells. Falls back to type.",
-  },
-  {
-    name: "width",
-    type: "number",
-    description: "Width in px this column starts at.",
-  },
-  {
-    name: "minWidth",
-    type: "number",
-    description: "Lower bound a resize may not drag below.",
-  },
-  {
-    name: "maxWidth",
-    type: "number",
-    description: "Upper bound a resize may not drag above.",
-  },
-  {
-    name: "resizable",
-    type: "boolean",
-    description:
-      "Whether this column can be resized, overriding the grid-level default.",
-  },
-  {
-    name: "reorderable",
-    type: "boolean",
-    description:
-      "Whether this column can be dragged to a new position, overriding the grid-level default.",
-  },
-  {
-    name: "wrap",
-    type: "{ header?, cells? }",
-    description:
-      "Lets this column's header and/or cell text wrap onto multiple lines instead of truncating.",
-  },
-  {
-    name: "headerClassName",
-    type: "string",
-    description: "Extra class names appended to this column's th.",
-  },
-  {
-    name: "cellClassName",
-    type: "string",
-    description:
-      "Extra class names appended to this column's td, on every row.",
-  },
-];
-
-<PropsTable rows={shapeRows} />
+| Prop              | Type                                          | Description                                                                                |
+| ----------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `field`           | `FieldPath<Row> \| string`                    | Path to this column's value, e.g. "Application.Id".                                        |
+| `id`              | `string`                                      | Stable identity for sizing/order state. Defaults to field.                                 |
+| `headerTemplate`  | `Node \| (() => Node)`                        | Header content, or a function returning it at render time.                                 |
+| `cellTemplate`    | `(context: CellTemplateContext<Row>) => Node` | Renders this column's cells in place of the raw value.                                     |
+| `type`            | `ColumnType`                                  | The value type of this column's cells, e.g. "currency".                                    |
+| `alignment`       | `"left" \| "center" \| "right"`               | Alignment of this column's cells. Falls back to type.                                      |
+| `width`           | `number`                                      | Width in px this column starts at.                                                         |
+| `minWidth`        | `number`                                      | Lower bound a resize may not drag below.                                                   |
+| `maxWidth`        | `number`                                      | Upper bound a resize may not drag above.                                                   |
+| `resizable`       | `boolean`                                     | Whether this column can be resized, overriding the grid-level default.                     |
+| `reorderable`     | `boolean`                                     | Whether this column can be dragged to a new position, overriding the grid-level default.   |
+| `wrap`            | `{ header?, cells? }`                         | Lets this column's header and/or cell text wrap onto multiple lines instead of truncating. |
+| `headerClassName` | `string`                                      | Extra class names appended to this column's th.                                            |
+| `cellClassName`   | `string`                                      | Extra class names appended to this column's td, on every row.                              |
 
 ## Inferred columns
 
@@ -101,29 +39,9 @@ const columns = defineColumnsFromRows(rows);
 <DataGridComponent columns={columns} dataSource={rows} borders="horizontal" />;
 ```
 
-export const functionRows = [
-  {
-    name: "defineColumnsFromRows(rows)",
-    type: "readonly ColumnDefinition<Row>[]",
-    description:
-      "Infers a type and alignment per field, one level into nested objects.",
-  },
-  {
-    name: "accessDotted(obj, path)",
-    type: "unknown",
-    description: 'Reads a value at a dotted path, e.g. "Application.Id".',
-  },
-  {
-    name: "alignmentForType(type)",
-    type: "ColumnAlignment",
-    description: 'Alignment a column type defaults to — "right" for numbers.',
-  },
-  {
-    name: "resolveColumnLabel(column)",
-    type: "string",
-    description:
-      "The label a column's header falls back to when it sets no headerTemplate.",
-  },
-];
-
-<PropsTable rows={functionRows} className="mt-6" />
+| Function                      | Type                               | Description                                                               |
+| ----------------------------- | ---------------------------------- | ------------------------------------------------------------------------- |
+| `defineColumnsFromRows(rows)` | `readonly ColumnDefinition<Row>[]` | Infers a type and alignment per field, one level into nested objects.     |
+| `accessDotted(obj, path)`     | `unknown`                          | Reads a value at a dotted path, e.g. "Application.Id".                    |
+| `alignmentForType(type)`      | `ColumnAlignment`                  | Alignment a column type defaults to — "right" for numbers.                |
+| `resolveColumnLabel(column)`  | `string`                           | The label a column's header falls back to when it sets no headerTemplate. |

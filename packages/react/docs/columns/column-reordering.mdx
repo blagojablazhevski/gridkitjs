@@ -22,34 +22,12 @@ reorderableColumns turns on dragging a header to a new position, unless a column
 
 ## Props
 
-export const propRows = [
-  {
-    name: "reorderableColumns",
-    type: "boolean",
-    default: "false",
-    description: "Whether columns can be dragged into a new position.",
-  },
-  {
-    name: "defaultColumnOrder",
-    type: "readonly string[]",
-    description:
-      "Column ids in the order to start in. Uncontrolled, and partial — ids it omits keep their position among columns.",
-  },
-  {
-    name: "onColumnOrderChange",
-    type: "(event: ColumnOrderEvent) => void",
-    description:
-      "Called once when the user drops a column somewhere new. A drop that leaves the order unchanged does not call it.",
-  },
-  {
-    name: "column.reorderable",
-    type: "boolean",
-    description:
-      "Per-column override of reorderableColumns. A column that cannot move can still be moved past.",
-  },
-];
-
-<PropsTable rows={propRows} />
+| Prop                  | Type                                | Default | Description                                                                                                      |
+| --------------------- | ----------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------- |
+| `reorderableColumns`  | `boolean`                           | `false` | Whether columns can be dragged into a new position.                                                              |
+| `defaultColumnOrder`  | `readonly string[]`                 |         | Column ids in the order to start in. Uncontrolled, and partial — ids it omits keep their position among columns. |
+| `onColumnOrderChange` | `(event: ColumnOrderEvent) => void` |         | Called once when the user drops a column somewhere new. A drop that leaves the order unchanged does not call it. |
+| `column.reorderable`  | `boolean`                           |         | Per-column override of reorderableColumns. A column that cannot move can still be moved past.                    |
 
 ## Keyboard & pointer interactions
 

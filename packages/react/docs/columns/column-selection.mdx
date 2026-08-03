@@ -22,35 +22,10 @@ selectable.columns takes false, "single", or "multiple" — off by default, sinc
 
 ## Props
 
-export const propRows = [
-  {
-    name: "selectable.columns",
-    type: 'false | "single" | "multiple"',
-    default: "false",
-    description: "How many columns the user may select at once.",
-  },
-  {
-    name: "defaultColumnSelection",
-    type: "SelectionState",
-    description: "Column ids selected to start with. Uncontrolled.",
-  },
-  {
-    name: "onColumnSelect / onColumnsSelect",
-    type: "(event) => void",
-    description:
-      "Once per column newly selected, and once per interaction with every column it selected.",
-  },
-  {
-    name: "onColumnDeselect / onColumnsDeselect",
-    type: "(event) => void",
-    description: "The deselecting counterpart of each, above.",
-  },
-  {
-    name: "onColumnSelectionChange",
-    type: "(event: ColumnSelectionChangeEvent) => void",
-    description:
-      "Once per change with what it added, what it removed, and everything selected after — the one to persist from.",
-  },
-];
-
-<PropsTable rows={propRows} />
+| Prop                                   | Type                                          | Default | Description                                                                                                   |
+| -------------------------------------- | --------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------- |
+| `selectable.columns`                   | `false \| "single" \| "multiple"`             | `false` | How many columns the user may select at once.                                                                 |
+| `defaultColumnSelection`               | `SelectionState`                              |         | Column ids selected to start with. Uncontrolled.                                                              |
+| `onColumnSelect / onColumnsSelect`     | `(event) => void`                             |         | Once per column newly selected, and once per interaction with every column it selected.                       |
+| `onColumnDeselect / onColumnsDeselect` | `(event) => void`                             |         | The deselecting counterpart of each, above.                                                                   |
+| `onColumnSelectionChange`              | `(event: ColumnSelectionChangeEvent) => void` |         | Once per change with what it added, what it removed, and everything selected after — the one to persist from. |

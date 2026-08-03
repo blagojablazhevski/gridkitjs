@@ -18,106 +18,30 @@ npm install @gridkitjs/theme-tailwind
 
 ## Semantic classes
 
-export const classRows = [
-  {
-    name: ".gridkit-data-grid",
-    type: "<table>",
-    description:
-      "The grid itself. Carries borders-horizontal/vertical/all and no-hover-rows/columns/cells state classes.",
-  },
-  {
-    name: ".grid-header",
-    type: "<tr>",
-    description: "The header row.",
-  },
-  {
-    name: ".header-cell",
-    type: "<th>",
-    description:
-      "A header cell. States: is-resizing, is-dragging, is-drop-before, is-drop-after, is-wrapped.",
-  },
-  {
-    name: ".grid-row",
-    type: "<tr>",
-    description: "A body row.",
-  },
-  {
-    name: ".grid-cell",
-    type: "<td>",
-    description: "A body cell. States: is-resizing, is-wrapped.",
-  },
-  {
-    name: ".header-resize-handle",
-    type: "element",
-    description: "The draggable resize grip on a header cell's trailing edge.",
-  },
-  {
-    name: ".selectable-rows / .selectable-columns / .selectable-cells",
-    type: "<table>",
-    description:
-      "Present on the grid while the matching selectable member is enabled — what turns on the pointer cursor and text-selection guard.",
-  },
-  {
-    name: ".is-selected",
-    type: "<tr> | <th> | <td>",
-    description:
-      "A selected row, header cell, or cell. A selected cell wins over its row and column.",
-  },
-];
-
-<PropsTable rows={classRows} />
+| Class                                                        | Element                | Description                                                                                                                      |
+| ------------------------------------------------------------ | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `.gridkit-data-grid`                                         | `<table>`              | The grid itself. Carries borders-horizontal/vertical/all and no-hover-rows/columns/cells state classes.                          |
+| `.grid-header`                                               | `<tr>`                 | The header row.                                                                                                                  |
+| `.header-cell`                                               | `<th>`                 | A header cell. States: is-resizing, is-dragging, is-drop-before, is-drop-after, is-wrapped.                                      |
+| `.grid-row`                                                  | `<tr>`                 | A body row.                                                                                                                      |
+| `.grid-cell`                                                 | `<td>`                 | A body cell. States: is-resizing, is-wrapped.                                                                                    |
+| `.header-resize-handle`                                      | `element`              | The draggable resize grip on a header cell's trailing edge.                                                                      |
+| `.selectable-rows / .selectable-columns / .selectable-cells` | `<table>`              | Present on the grid while the matching selectable member is enabled — what turns on the pointer cursor and text-selection guard. |
+| `.is-selected`                                               | `<tr> \| <th> \| <td>` | A selected row, header cell, or cell. A selected cell wins over its row and column.                                              |
 
 ## Theme tokens
 
-export const tokenRows = [
-  {
-    name: "--gridkit-surface",
-    type: "color",
-    description: "Header background.",
-  },
-  {
-    name: "--gridkit-surface-muted",
-    type: "color",
-    description: "Hover background.",
-  },
-  {
-    name: "--gridkit-line",
-    type: "color",
-    description: "Borders.",
-  },
-  {
-    name: "--gridkit-hover-line",
-    type: "color",
-    description: "Cell hover outline, resize edge.",
-  },
-  {
-    name: "--gridkit-fg",
-    type: "color",
-    description: "Text.",
-  },
-  {
-    name: "--gridkit-fg-muted",
-    type: "color",
-    description: "Secondary text, resize grip.",
-  },
-  {
-    name: "--gridkit-accent",
-    type: "color",
-    description: "Accent — resize and reorder indicator lines.",
-  },
-  {
-    name: "--gridkit-selected",
-    type: "color",
-    description: "A selected row, column, or cell.",
-  },
-  {
-    name: "--gridkit-selected-strong",
-    type: "color",
-    description: "A selected row or cell also hovered.",
-  },
-];
-
-<PropsTable rows={tokenRows} />
+| Token                       | Type    | Description                                  |
+| --------------------------- | ------- | -------------------------------------------- |
+| `--gridkit-surface`         | `color` | Header background.                           |
+| `--gridkit-surface-muted`   | `color` | Hover background.                            |
+| `--gridkit-line`            | `color` | Borders.                                     |
+| `--gridkit-hover-line`      | `color` | Cell hover outline, resize edge.             |
+| `--gridkit-fg`              | `color` | Text.                                        |
+| `--gridkit-fg-muted`        | `color` | Secondary text, resize grip.                 |
+| `--gridkit-accent`          | `color` | Accent — resize and reorder indicator lines. |
+| `--gridkit-selected`        | `color` | A selected row, column, or cell.             |
+| `--gridkit-selected-strong` | `color` | A selected row or cell also hovered.         |
 
 ```css
 :root {
