@@ -6,6 +6,7 @@ import {
   alignmentForType,
   defineColumnsFromRows,
   resolveColumnLabel,
+  resolveRowId,
 } from "./grid";
 
 interface Application {
@@ -168,8 +169,27 @@ describe("ColumnDefinition", () => {
         value: accessDotted(row, column.field),
         row,
         rowIndex: 0,
+        rowId: "1",
+        selected: false,
       }),
     ).toBe("0:Portal:1");
+  });
+
+  test("hands a cellTemplate its row's id and whether it is selected", () => {
+    const column: ColumnDefinition<SampleRow> = {
+      field: "Id",
+      cellTemplate: ({ rowId, selected }) => `${rowId}:${String(selected)}`,
+    };
+
+    expect(
+      column.cellTemplate?.({
+        value: 1,
+        row: sampleRow(),
+        rowIndex: 0,
+        rowId: "app-1",
+        selected: true,
+      }),
+    ).toBe("app-1:true");
   });
 
   test("widens cellTemplate with the node type, as a header does", () => {
@@ -180,7 +200,13 @@ describe("ColumnDefinition", () => {
     };
 
     expect(
-      column.cellTemplate?.({ value: 1, row: sampleRow(), rowIndex: 0 }),
+      column.cellTemplate?.({
+        value: 1,
+        row: sampleRow(),
+        rowIndex: 0,
+        rowId: "0",
+        selected: false,
+      }),
     ).toBe(marker);
   });
 
@@ -262,6 +288,32 @@ describe("resolveColumnLabel", () => {
         headerTemplate: "",
       }),
     ).toBe("");
+  });
+});
+
+describe("resolveRowId", () => {
+  test("takes the id getRowId gives", () => {
+    expect(resolveRowId(sampleRow(), 3, (row) => String(row.Id))).toBe("1");
+  });
+
+  test("hands getRowId the position alongside the row", () => {
+    expect(
+      resolveRowId(
+        sampleRow(),
+        3,
+        (row, index) => `${String(index)}-${String(row.Id)}`,
+      ),
+    ).toBe("3-1");
+  });
+
+  test("falls back to the position when no getRowId is given", () => {
+    expect(resolveRowId(sampleRow(), 3)).toBe("3");
+    expect(resolveRowId(sampleRow(), 3, undefined)).toBe("3");
+  });
+
+  /** An id is a string wherever it comes from, so state keys stay comparable. */
+  test("gives a string for the fallback as much as for a getRowId", () => {
+    expect(typeof resolveRowId(sampleRow(), 0)).toBe("string");
   });
 });
 

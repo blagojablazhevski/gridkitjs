@@ -5,6 +5,7 @@ import {
   fitColumnsToWidth,
   moveColumnBefore,
   resolveColumnWidths,
+  resolveRowId,
   totalColumnWidth,
   type ColumnDefinition as CoreColumnDefinition,
   type ResolvedColumn as CoreResolvedColumn,
@@ -13,6 +14,7 @@ import {
   type ColumnResizeEvent,
   type ColumnSizeDefaults,
   type ColumnSizingState,
+  type ResolvedRow,
 } from "@gridkitjs/core";
 import GridHeader from "./components/GridHeader";
 import GridBody from "./components/GridBody";
@@ -51,6 +53,17 @@ export interface HoverableConfig {
 export interface DataGridProps<Row> {
   columns?: readonly ColumnDefinition<Row>[] | undefined;
   dataSource?: readonly Row[] | undefined;
+  /**
+   * A row's stable identity, for state keyed by it. Defaults to the row's
+   * position, which is enough for a static grid but ties that state to where a
+   * row sits rather than to the row — so anything sorting, filtering or paging
+   * its data should give one.
+   *
+   * Called for every row on every change to `dataSource`, so it should be
+   * cheap and stable; an inline arrow is fine, one that re-reads the data is
+   * not.
+   */
+  getRowId?: ((row: Row, index: number) => string) | undefined;
   borders?: Borders | undefined;
   hoverable?: HoverableConfig | undefined;
   /** Whether columns can be dragged wider, unless a column says otherwise. */
@@ -95,6 +108,7 @@ export interface DataGridProps<Row> {
 export function DataGridComponent<Row>({
   dataSource,
   columns,
+  getRowId,
   borders,
   hoverable,
   resizableColumns = false,
@@ -118,6 +132,26 @@ export function DataGridComponent<Row>({
   );
   const [order, setOrder] = useState<ColumnOrderState>(
     defaultColumnOrder ?? [],
+  );
+
+  /**
+   * The rows as rendered, each carrying the id everything downstream keys it
+   * by. Resolved once here rather than per consumer so a row's id cannot come
+   * out differently in two places — the same reason `resolveColumnWidths` runs
+   * once ahead of the header and the body.
+   *
+   * An array rather than a map keyed by id: two rows given the same id is a
+   * caller's mistake, and one that should render twice and look wrong rather
+   * than silently lose a row.
+   */
+  const rows = useMemo<readonly ResolvedRow<Row>[]>(
+    () =>
+      dataSource?.map((row, rowIndex) => ({
+        rowId: resolveRowId(row, rowIndex, getRowId),
+        row,
+        rowIndex,
+      })) ?? [],
+    [dataSource, getRowId],
   );
 
   const definedColumns = useMemo<readonly ColumnDefinition<Row>[]>(() => {
@@ -221,7 +255,7 @@ export function DataGridComponent<Row>({
         <GridHeader<Row> columns={resolved} resize={resize} drag={drag} />
         <GridBody<Row>
           columns={resolved}
-          dataSource={dataSource}
+          rows={rows}
           activeColumnId={resize.activeColumnId}
         />
       </table>

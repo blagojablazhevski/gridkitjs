@@ -103,6 +103,24 @@ export function getColumnId<Row>(
 }
 
 /**
+ * The key state about a row is stored under, and the key it renders with — the
+ * row's counterpart to `getColumnId`, and for the same reason: every such
+ * lookup goes through here so no two can disagree.
+ *
+ * Falls back to the position so a grid given no `getRowId` still works. That
+ * fallback ties a selection to where a row sits rather than to the row, so
+ * anything that sorts, filters or pages its data has to supply one — otherwise
+ * a re-sort leaves the same positions selected under different rows.
+ */
+export function resolveRowId<Row>(
+  row: Row,
+  index: number,
+  getRowId?: (row: Row, index: number) => string,
+): string {
+  return getRowId?.(row, index) ?? String(index);
+}
+
+/**
  * What a column's header shows: its own `headerTemplate`, called first if it is
  * a function, or else a label read off the field path — `"Application.Id"`
  * reading as `"Application Id"`.

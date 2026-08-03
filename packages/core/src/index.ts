@@ -3,6 +3,10 @@ export type {
   CellTemplateContext,
   ColumnDefinition,
   FieldPath,
+  CellSelectEvent,
+  CellSelectionChangeEvent,
+  CellSelectionMode,
+  CellSelectionState,
   ColumnAlignment,
   ColumnConstraints,
   ColumnOrderEvent,
@@ -10,12 +14,26 @@ export type {
   ColumnResizeEvent,
   ColumnResizeSession,
   ColumnResolveOptions,
+  ColumnSelectEvent,
+  ColumnSelectionChangeEvent,
   ColumnSizeDefaults,
   ColumnSizingState,
+  ColumnsSelectEvent,
   ColumnType,
   ColumnWrapConfig,
   DropSide,
   ResolvedColumn,
+  ResolvedRow,
+  RowSelectEvent,
+  RowSelectionChangeEvent,
+  RowsSelectEvent,
+  SelectableConfig,
+  SelectedCell,
+  SelectedCellRef,
+  SelectedColumn,
+  SelectionDiff,
+  SelectionMode,
+  SelectionState,
 } from "./types";
 export {
   accessDotted,
@@ -23,6 +41,7 @@ export {
   defineColumnsFromRows,
   getColumnId,
   resolveColumnLabel,
+  resolveRowId,
 } from "./util/grid";
 export {
   applyColumnOrder,
@@ -30,6 +49,17 @@ export {
   movesColumn,
   resolveDropBefore,
 } from "./util/ordering";
+export {
+  clearSelection,
+  diffSelection,
+  isSameCell,
+  selectAll,
+  selectCell,
+  selectOnly,
+  selectRange,
+  toggleCellSelection,
+  toggleSelection,
+} from "./util/selection";
 export {
   DEFAULT_COLUMN_SIZES,
   KEYBOARD_STEP,
