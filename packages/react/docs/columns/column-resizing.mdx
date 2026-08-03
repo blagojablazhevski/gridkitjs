@@ -1,0 +1,78 @@
+---
+title: "Column resizing"
+description: "Dragging a column wider with resizableColumns, resizeMode, and columnSizeDefaults."
+---
+
+resizableColumns turns on dragging a header's trailing edge to resize, unless a column sets its own resizable to override the grid. Double-clicking the edge fits the column to its content instead. resizeMode decides what happens to the rest of the grid: "fit" (the default) redistributes the space a resize gives up or takes among the other columns; "fixed" leaves every other column exactly where it was.
+
+## fit vs. fixed
+
+<LiveExampleFrame title="resizableColumns">
+  <ColumnResizingExample />
+</LiveExampleFrame>
+
+```ts
+<DataGridComponent
+  columns={columns}
+  dataSource={rows}
+  resizableColumns
+  resizeMode="fit"
+  onColumnResize={({ columnId, width, phase }) => {
+    if (phase === "end") persist(columnId, width);
+  }}
+/>;
+```
+
+## Props
+
+export const propRows = [
+  {
+    name: "resizableColumns",
+    type: "boolean",
+    default: "false",
+    description:
+      "Whether columns can be dragged wider, unless a column says otherwise.",
+  },
+  {
+    name: "resizeMode",
+    type: '"fit" | "fixed"',
+    default: '"fit"',
+    description: "Whether columns fill the grid's width or sit at their own.",
+  },
+  {
+    name: "columnSizeDefaults",
+    type: "Partial<ColumnSizeDefaults>",
+    description:
+      "Width, minWidth, maxWidth applied to a column that sets none of its own.",
+  },
+  {
+    name: "defaultColumnSizing",
+    type: "ColumnSizingState",
+    description:
+      "Column widths to start from, keyed by column id. Uncontrolled.",
+  },
+  {
+    name: "onColumnResize",
+    type: "(event: ColumnResizeEvent) => void",
+    description:
+      'Called as the user resizes a column: continuously with phase "move", once with "end".',
+  },
+  {
+    name: "column.resizable",
+    type: "boolean",
+    description:
+      "Per-column override of resizableColumns — a column can opt out of an otherwise resizable grid, or in on one that is not.",
+  },
+  {
+    name: "column.width / minWidth / maxWidth",
+    type: "number",
+    description: "This column's own starting width and resize bounds.",
+  },
+];
+
+<PropsTable rows={propRows} />
+
+## Keyboard & pointer interactions
+
+- Drag a header's trailing edge to resize; double-click it to size the column to its content.
+- With the trailing edge focused, `Alt+ArrowLeft` / `Alt+ArrowRight` nudge the width; Escape cancels an in-progress resize.

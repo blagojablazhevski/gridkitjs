@@ -1,0 +1,56 @@
+---
+title: "Column selection"
+description: "Letting the user select whole columns with selectable.columns."
+---
+
+selectable.columns takes false, "single", or "multiple" — off by default, since selection claims the click a display-only grid shouldn't. A column click replaces the selection, Ctrl-click toggles one column in or out, and Shift-click takes every column between the last click and this one.
+
+## Multi-select columns
+
+<LiveExampleFrame title='selectable={{ columns: "multiple" }}'>
+  <ColumnSelectionExample />
+</LiveExampleFrame>
+
+```ts
+<DataGridComponent
+  columns={columns}
+  dataSource={rows}
+  selectable={{ columns: "multiple" }}
+  onColumnSelectionChange={({ selected }) => persist(selected)}
+/>;
+```
+
+## Props
+
+export const propRows = [
+  {
+    name: "selectable.columns",
+    type: 'false | "single" | "multiple"',
+    default: "false",
+    description: "How many columns the user may select at once.",
+  },
+  {
+    name: "defaultColumnSelection",
+    type: "SelectionState",
+    description: "Column ids selected to start with. Uncontrolled.",
+  },
+  {
+    name: "onColumnSelect / onColumnsSelect",
+    type: "(event) => void",
+    description:
+      "Once per column newly selected, and once per interaction with every column it selected.",
+  },
+  {
+    name: "onColumnDeselect / onColumnsDeselect",
+    type: "(event) => void",
+    description: "The deselecting counterpart of each, above.",
+  },
+  {
+    name: "onColumnSelectionChange",
+    type: "(event: ColumnSelectionChangeEvent) => void",
+    description:
+      "Once per change with what it added, what it removed, and everything selected after — the one to persist from.",
+  },
+];
+
+<PropsTable rows={propRows} />

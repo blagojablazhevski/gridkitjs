@@ -1,0 +1,129 @@
+---
+title: "Column definitions"
+description: "Inferring columns from row data with defineColumnsFromRows."
+---
+
+defineColumnsFromRows inspects your row data and infers a type and alignment per field, one level into nested objects. Use it as a starting point, then override or extend individual columns.
+
+## Column definition shape
+
+export const shapeRows = [
+  {
+    name: "field",
+    type: "FieldPath<Row> | string",
+    description: 'Path to this column\'s value, e.g. "Application.Id".',
+  },
+  {
+    name: "id",
+    type: "string",
+    description: "Stable identity for sizing/order state. Defaults to field.",
+  },
+  {
+    name: "headerTemplate",
+    type: "Node | (() => Node)",
+    description: "Header content, or a function returning it at render time.",
+  },
+  {
+    name: "cellTemplate",
+    type: "(context: CellTemplateContext<Row>) => Node",
+    description: "Renders this column's cells in place of the raw value.",
+  },
+  {
+    name: "type",
+    type: "ColumnType",
+    description: 'The value type of this column\'s cells, e.g. "currency".',
+  },
+  {
+    name: "alignment",
+    type: '"left" | "center" | "right"',
+    description: "Alignment of this column's cells. Falls back to type.",
+  },
+  {
+    name: "width",
+    type: "number",
+    description: "Width in px this column starts at.",
+  },
+  {
+    name: "minWidth",
+    type: "number",
+    description: "Lower bound a resize may not drag below.",
+  },
+  {
+    name: "maxWidth",
+    type: "number",
+    description: "Upper bound a resize may not drag above.",
+  },
+  {
+    name: "resizable",
+    type: "boolean",
+    description:
+      "Whether this column can be resized, overriding the grid-level default.",
+  },
+  {
+    name: "reorderable",
+    type: "boolean",
+    description:
+      "Whether this column can be dragged to a new position, overriding the grid-level default.",
+  },
+  {
+    name: "wrap",
+    type: "{ header?, cells? }",
+    description:
+      "Lets this column's header and/or cell text wrap onto multiple lines instead of truncating.",
+  },
+  {
+    name: "headerClassName",
+    type: "string",
+    description: "Extra class names appended to this column's th.",
+  },
+  {
+    name: "cellClassName",
+    type: "string",
+    description:
+      "Extra class names appended to this column's td, on every row.",
+  },
+];
+
+<PropsTable rows={shapeRows} />
+
+## Inferred columns
+
+<LiveExampleFrame title="defineColumnsFromRows">
+  <DataGridBasicExample />
+</LiveExampleFrame>
+
+```ts
+import { defineColumnsFromRows } from "@gridkitjs/core";
+import { DataGridComponent } from "@gridkitjs/react";
+
+const columns = defineColumnsFromRows(rows);
+
+<DataGridComponent columns={columns} dataSource={rows} borders="horizontal" />;
+```
+
+export const functionRows = [
+  {
+    name: "defineColumnsFromRows(rows)",
+    type: "readonly ColumnDefinition<Row>[]",
+    description:
+      "Infers a type and alignment per field, one level into nested objects.",
+  },
+  {
+    name: "accessDotted(obj, path)",
+    type: "unknown",
+    description: 'Reads a value at a dotted path, e.g. "Application.Id".',
+  },
+  {
+    name: "alignmentForType(type)",
+    type: "ColumnAlignment",
+    description: 'Alignment a column type defaults to — "right" for numbers.',
+  },
+  {
+    name: "resolveColumnLabel(column)",
+    type: "string",
+    description:
+      "The label a column's header falls back to when it sets no headerTemplate.",
+  },
+];
+
+<PropsTable rows={functionRows} className="mt-6" />
