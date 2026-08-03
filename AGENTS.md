@@ -36,6 +36,19 @@ and the theme's stylesheet targets them. Keep it that way: a Tailwind utility
 written in a component would oblige every consumer to scan our source for it,
 which is what `@source` used to paper over.
 
+## Docs
+
+Docs live as `.mdx` under each package's `docs/` folder (e.g.
+`packages/react/docs/`) and are fetched and rendered by the `gridkit-website`
+repo — there is no docs build here, so `.mdx` changes can only be previewed
+there.
+
+Reference actual key presses with `<Kbd>` — `<Kbd>Ctrl</Kbd>+<Kbd>A</Kbd>`,
+not backtick text like `` `Ctrl+A` ``. `<Kbd>` is globally available in
+rendered docs (registered in `gridkit-website`'s MDX component map), so it
+needs no import. Reserve it for keys, not mouse actions worded with "click"
+or "drag".
+
 ## Tests
 
 Vitest. Test files sit next to the code as `*.test.ts` in `src/`.
