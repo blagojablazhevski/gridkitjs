@@ -1,0 +1,50 @@
+---
+title: "Cell selection"
+description: "Letting the user select one cell at a time with selectable.cells."
+---
+
+selectable.cells takes only false or "single": a cell addresses one value, so there is no "multiple" and no range to take. A click moves the selection to that cell; Ctrl-click on the selected cell clears it.
+
+## Single-select cells
+
+<LiveExampleFrame title='selectable={{ cells: "single" }}'>
+  <CellSelectionExample />
+</LiveExampleFrame>
+
+```ts
+<DataGridComponent
+  columns={columns}
+  dataSource={rows}
+  getRowId={(row) => String(row.Id)}
+  selectable={{ cells: "single" }}
+  onCellSelect={({ cell }) => console.log(cell.value)}
+/>;
+```
+
+## Props
+
+export const propRows = [
+  {
+    name: "selectable.cells",
+    type: 'false | "single"',
+    default: "false",
+    description: 'How many cells the user may select at once — no "multiple": a cell addresses one value, so there is no range to take.',
+  },
+  {
+    name: "defaultCellSelection",
+    type: "CellSelectionState",
+    description: "The cell selected to start with. Uncontrolled.",
+  },
+  {
+    name: "onCellSelect / onCellDeselect",
+    type: "(event: CellSelectEvent) => void",
+    description: "Once for the cell selected, once for the cell deselected.",
+  },
+  {
+    name: "onCellSelectionChange",
+    type: "(event: CellSelectionChangeEvent) => void",
+    description: "Once per change with what was selected and what was deselected — one interaction can fill both, since moving between cells deselects and selects at once.",
+  },
+];
+
+<PropsTable rows={propRows} />

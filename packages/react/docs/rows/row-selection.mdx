@@ -1,0 +1,61 @@
+---
+title: "Row selection"
+description: "Letting the user select whole rows with selectable.rows."
+---
+
+selectable.rows takes false, "single", or "multiple" — off by default, since selection claims the click a display-only grid shouldn't. Give getRowId alongside it for data that sorts, filters, or pages; without one a row is identified by its position, so a re-sort leaves the same positions selected under different rows.
+
+## Multi-select rows
+
+<LiveExampleFrame title='selectable={{ rows: "multiple" }}'>
+  <RowSelectionExample />
+</LiveExampleFrame>
+
+```ts
+<DataGridComponent
+  columns={columns}
+  dataSource={rows}
+  getRowId={(row) => String(row.Id)}
+  selectable={{ rows: "multiple" }}
+  onRowSelectionChange={({ selected }) => persist(selected)}
+/>;
+```
+
+## Props
+
+export const propRows = [
+  {
+    name: "selectable.rows",
+    type: 'false | "single" | "multiple"',
+    default: "false",
+    description: "How many rows the user may select at once.",
+  },
+  {
+    name: "getRowId",
+    type: "(row: Row, index: number) => string",
+    default: "row position",
+    description: "A row's stable identity. Give one for data that sorts, filters, or pages, or a selection follows the position rather than the row.",
+  },
+  {
+    name: "defaultRowSelection",
+    type: "SelectionState",
+    description: "Row ids selected to start with, keyed as getRowId resolves them. Uncontrolled.",
+  },
+  {
+    name: "onRowSelect / onRowsSelect",
+    type: "(event) => void",
+    description: "Once per row newly selected, and once per interaction with every row it selected.",
+  },
+  {
+    name: "onRowDeselect / onRowsDeselect",
+    type: "(event) => void",
+    description: "The deselecting counterpart of each, above.",
+  },
+  {
+    name: "onRowSelectionChange",
+    type: "(event: RowSelectionChangeEvent) => void",
+    description: "Once per change with what it added, what it removed, and everything selected after — the one to persist from.",
+  },
+];
+
+<PropsTable rows={propRows} />

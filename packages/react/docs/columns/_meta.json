@@ -1,0 +1,9 @@
+{
+  "title": "Columns",
+  "order": [
+    "column-templates",
+    "column-resizing",
+    "column-reordering",
+    "column-selection"
+  ]
+}

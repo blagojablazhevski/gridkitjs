@@ -1,0 +1,39 @@
+---
+title: "Column templates"
+description: "Custom header and cell rendering with headerTemplate and cellTemplate."
+---
+
+Start from defineColumnsFromRows for the columns you don't need to customize, then declare the ones you do. headerTemplate and cellTemplate accept any React node, so formatting and conditional styling are plain component code.
+
+## Formatted currency column
+
+<LiveExampleFrame title="Column templates">
+  <ColumnTemplatesExample />
+</LiveExampleFrame>
+
+```ts
+import { defineColumnsFromRows } from "@gridkitjs/core";
+import { DataGridComponent, type ColumnDefinition } from "@gridkitjs/react";
+
+const currency = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+});
+
+const columns: readonly ColumnDefinition<Row>[] = [
+  ...defineColumnsFromRows(rows),
+  {
+    field: "Cost",
+    id: "Cost.currency",
+    type: "currency",
+    headerTemplate: <span className="italic">Cost</span>,
+    cellTemplate: ({ value, row }) => (
+      <span className={row.Cost > 500 ? "font-semibold text-red-600" : ""}>
+        {currency.format(Number(value))}
+      </span>
+    ),
+  },
+];
+
+<DataGridComponent columns={columns} dataSource={rows} borders="horizontal" />;
+```
