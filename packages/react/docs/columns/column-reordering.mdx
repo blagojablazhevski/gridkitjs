@@ -32,17 +32,20 @@ export const propRows = [
   {
     name: "defaultColumnOrder",
     type: "readonly string[]",
-    description: "Column ids in the order to start in. Uncontrolled, and partial — ids it omits keep their position among columns.",
+    description:
+      "Column ids in the order to start in. Uncontrolled, and partial — ids it omits keep their position among columns.",
   },
   {
     name: "onColumnOrderChange",
     type: "(event: ColumnOrderEvent) => void",
-    description: "Called once when the user drops a column somewhere new. A drop that leaves the order unchanged does not call it.",
+    description:
+      "Called once when the user drops a column somewhere new. A drop that leaves the order unchanged does not call it.",
   },
   {
     name: "column.reorderable",
     type: "boolean",
-    description: "Per-column override of reorderableColumns. A column that cannot move can still be moved past.",
+    description:
+      "Per-column override of reorderableColumns. A column that cannot move can still be moved past.",
   },
 ];
 

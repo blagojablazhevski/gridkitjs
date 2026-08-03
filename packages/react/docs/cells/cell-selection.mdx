@@ -28,7 +28,8 @@ export const propRows = [
     name: "selectable.cells",
     type: 'false | "single"',
     default: "false",
-    description: 'How many cells the user may select at once — no "multiple": a cell addresses one value, so there is no range to take.',
+    description:
+      'How many cells the user may select at once — no "multiple": a cell addresses one value, so there is no range to take.',
   },
   {
     name: "defaultCellSelection",
@@ -43,7 +44,8 @@ export const propRows = [
   {
     name: "onCellSelectionChange",
     type: "(event: CellSelectionChangeEvent) => void",
-    description: "Once per change with what was selected and what was deselected — one interaction can fill both, since moving between cells deselects and selects at once.",
+    description:
+      "Once per change with what was selected and what was deselected — one interaction can fill both, since moving between cells deselects and selects at once.",
   },
 ];
 

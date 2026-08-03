@@ -11,7 +11,7 @@ export const shapeRows = [
   {
     name: "field",
     type: "FieldPath<Row> | string",
-    description: "Path to this column's value, e.g. \"Application.Id\".",
+    description: 'Path to this column\'s value, e.g. "Application.Id".',
   },
   {
     name: "id",
@@ -31,7 +31,7 @@ export const shapeRows = [
   {
     name: "type",
     type: "ColumnType",
-    description: "The value type of this column's cells, e.g. \"currency\".",
+    description: 'The value type of this column\'s cells, e.g. "currency".',
   },
   {
     name: "alignment",
@@ -56,17 +56,20 @@ export const shapeRows = [
   {
     name: "resizable",
     type: "boolean",
-    description: "Whether this column can be resized, overriding the grid-level default.",
+    description:
+      "Whether this column can be resized, overriding the grid-level default.",
   },
   {
     name: "reorderable",
     type: "boolean",
-    description: "Whether this column can be dragged to a new position, overriding the grid-level default.",
+    description:
+      "Whether this column can be dragged to a new position, overriding the grid-level default.",
   },
   {
     name: "wrap",
     type: "{ header?, cells? }",
-    description: "Lets this column's header and/or cell text wrap onto multiple lines instead of truncating.",
+    description:
+      "Lets this column's header and/or cell text wrap onto multiple lines instead of truncating.",
   },
   {
     name: "headerClassName",
@@ -76,7 +79,8 @@ export const shapeRows = [
   {
     name: "cellClassName",
     type: "string",
-    description: "Extra class names appended to this column's td, on every row.",
+    description:
+      "Extra class names appended to this column's td, on every row.",
   },
 ];
 
@@ -101,22 +105,24 @@ export const functionRows = [
   {
     name: "defineColumnsFromRows(rows)",
     type: "readonly ColumnDefinition<Row>[]",
-    description: "Infers a type and alignment per field, one level into nested objects.",
+    description:
+      "Infers a type and alignment per field, one level into nested objects.",
   },
   {
     name: "accessDotted(obj, path)",
     type: "unknown",
-    description: "Reads a value at a dotted path, e.g. \"Application.Id\".",
+    description: 'Reads a value at a dotted path, e.g. "Application.Id".',
   },
   {
     name: "alignmentForType(type)",
     type: "ColumnAlignment",
-    description: "Alignment a column type defaults to — \"right\" for numbers.",
+    description: 'Alignment a column type defaults to — "right" for numbers.',
   },
   {
     name: "resolveColumnLabel(column)",
     type: "string",
-    description: "The label a column's header falls back to when it sets no headerTemplate.",
+    description:
+      "The label a column's header falls back to when it sets no headerTemplate.",
   },
 ];
 

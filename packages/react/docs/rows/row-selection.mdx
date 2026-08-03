@@ -34,17 +34,20 @@ export const propRows = [
     name: "getRowId",
     type: "(row: Row, index: number) => string",
     default: "row position",
-    description: "A row's stable identity. Give one for data that sorts, filters, or pages, or a selection follows the position rather than the row.",
+    description:
+      "A row's stable identity. Give one for data that sorts, filters, or pages, or a selection follows the position rather than the row.",
   },
   {
     name: "defaultRowSelection",
     type: "SelectionState",
-    description: "Row ids selected to start with, keyed as getRowId resolves them. Uncontrolled.",
+    description:
+      "Row ids selected to start with, keyed as getRowId resolves them. Uncontrolled.",
   },
   {
     name: "onRowSelect / onRowsSelect",
     type: "(event) => void",
-    description: "Once per row newly selected, and once per interaction with every row it selected.",
+    description:
+      "Once per row newly selected, and once per interaction with every row it selected.",
   },
   {
     name: "onRowDeselect / onRowsDeselect",
@@ -54,7 +57,8 @@ export const propRows = [
   {
     name: "onRowSelectionChange",
     type: "(event: RowSelectionChangeEvent) => void",
-    description: "Once per change with what it added, what it removed, and everything selected after — the one to persist from.",
+    description:
+      "Once per change with what it added, what it removed, and everything selected after — the one to persist from.",
   },
 ];
 

@@ -53,7 +53,8 @@ export const propRows = [
   {
     name: "columns",
     type: "readonly ColumnDefinition<Row>[]",
-    description: "Columns to render. Falls back to defineColumnsFromRows(dataSource) when omitted.",
+    description:
+      "Columns to render. Falls back to defineColumnsFromRows(dataSource) when omitted.",
   },
   {
     name: "dataSource",
@@ -64,17 +65,20 @@ export const propRows = [
     name: "getRowId",
     type: "(row: Row, index: number) => string",
     default: "row position",
-    description: "A row's stable identity, for state keyed by it. Give one for data that sorts, filters, or pages.",
+    description:
+      "A row's stable identity, for state keyed by it. Give one for data that sorts, filters, or pages.",
   },
   {
     name: "label",
     type: "string",
-    description: "The grid's accessible name, announced when it takes focus — without one a screen reader announces only \"grid\".",
+    description:
+      'The grid\'s accessible name, announced when it takes focus — without one a screen reader announces only "grid".',
   },
   {
     name: "labelledBy",
     type: "string",
-    description: "The id of an element naming the grid, for a heading already on the page. Takes precedence over label.",
+    description:
+      "The id of an element naming the grid, for a heading already on the page. Takes precedence over label.",
   },
   {
     name: "borders",
@@ -90,7 +94,8 @@ export const propRows = [
     name: "resizableColumns",
     type: "boolean",
     default: "false",
-    description: "Whether columns can be dragged wider, unless a column says otherwise.",
+    description:
+      "Whether columns can be dragged wider, unless a column says otherwise.",
   },
   {
     name: "reorderableColumns",
@@ -107,7 +112,8 @@ export const propRows = [
   {
     name: "defaultColumnSizing",
     type: "ColumnSizingState",
-    description: "Column widths to start from, keyed by column id. Uncontrolled.",
+    description:
+      "Column widths to start from, keyed by column id. Uncontrolled.",
   },
   {
     name: "defaultColumnOrder",
@@ -122,7 +128,8 @@ export const propRows = [
   {
     name: "onColumnResize",
     type: "(event: ColumnResizeEvent) => void",
-    description: "Called as the user resizes a column: continuously with phase \"move\", once with \"end\".",
+    description:
+      'Called as the user resizes a column: continuously with phase "move", once with "end".',
   },
   {
     name: "onColumnOrderChange",
@@ -133,7 +140,8 @@ export const propRows = [
     name: "selectable",
     type: "{ rows?, columns?, cells? }",
     default: "all off",
-    description: "Which parts of the grid the user may select, and how many of each. Off by default: selection claims the click.",
+    description:
+      "Which parts of the grid the user may select, and how many of each. Off by default: selection claims the click.",
   },
   {
     name: "defaultRowSelection / defaultColumnSelection",

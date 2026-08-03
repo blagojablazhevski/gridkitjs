@@ -11,12 +11,13 @@ export const functionRows = [
   {
     name: "resolveColumnWidths(columns, sizing, options)",
     type: "readonly ResolvedColumn<Row>[]",
-    description: "Resolves each column's rendered width from its definition, the sizing state, and the grid's defaults.",
+    description:
+      "Resolves each column's rendered width from its definition, the sizing state, and the grid's defaults.",
   },
   {
     name: "fitColumnsToWidth(columns, width, sizeDefaults)",
     type: "readonly ResolvedColumn<Row>[]",
-    description: "Redistributes width across columns under resizeMode=\"fit\".",
+    description: 'Redistributes width across columns under resizeMode="fit".',
   },
   {
     name: "clampColumnWidth(width, constraints)",
@@ -31,17 +32,20 @@ export const functionRows = [
   {
     name: "beginColumnResize(column, startWidth, startPosition, sizeDefaults)",
     type: "ColumnResizeSession",
-    description: "Opens a resize: captures the column's constraints and starting point so applying a pointer position is arithmetic on numbers alone.",
+    description:
+      "Opens a resize: captures the column's constraints and starting point so applying a pointer position is arithmetic on numbers alone.",
   },
   {
     name: "applyColumnResize(session, position)",
     type: "number",
-    description: "The width the dragged column takes with the pointer at position.",
+    description:
+      "The width the dragged column takes with the pointer at position.",
   },
   {
     name: "sizeColumnToContent(measuredWidth, constraints)",
     type: "number",
-    description: "The width a double-click auto-fit resolves to, clamped to the column's bounds.",
+    description:
+      "The width a double-click auto-fit resolves to, clamped to the column's bounds.",
   },
   {
     name: "totalColumnWidth(resolved)",

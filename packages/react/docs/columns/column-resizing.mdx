@@ -30,7 +30,8 @@ export const propRows = [
     name: "resizableColumns",
     type: "boolean",
     default: "false",
-    description: "Whether columns can be dragged wider, unless a column says otherwise.",
+    description:
+      "Whether columns can be dragged wider, unless a column says otherwise.",
   },
   {
     name: "resizeMode",
@@ -41,22 +42,26 @@ export const propRows = [
   {
     name: "columnSizeDefaults",
     type: "Partial<ColumnSizeDefaults>",
-    description: "Width, minWidth, maxWidth applied to a column that sets none of its own.",
+    description:
+      "Width, minWidth, maxWidth applied to a column that sets none of its own.",
   },
   {
     name: "defaultColumnSizing",
     type: "ColumnSizingState",
-    description: "Column widths to start from, keyed by column id. Uncontrolled.",
+    description:
+      "Column widths to start from, keyed by column id. Uncontrolled.",
   },
   {
     name: "onColumnResize",
     type: "(event: ColumnResizeEvent) => void",
-    description: "Called as the user resizes a column: continuously with phase \"move\", once with \"end\".",
+    description:
+      'Called as the user resizes a column: continuously with phase "move", once with "end".',
   },
   {
     name: "column.resizable",
     type: "boolean",
-    description: "Per-column override of resizableColumns — a column can opt out of an otherwise resizable grid, or in on one that is not.",
+    description:
+      "Per-column override of resizableColumns — a column can opt out of an otherwise resizable grid, or in on one that is not.",
   },
   {
     name: "column.width / minWidth / maxWidth",

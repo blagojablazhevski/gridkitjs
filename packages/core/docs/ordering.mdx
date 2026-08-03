@@ -11,22 +11,26 @@ export const functionRows = [
   {
     name: "applyColumnOrder(columns, order)",
     type: "readonly ColumnDefinition<Row>[]",
-    description: "Puts columns in the order order gives. Ids it omits keep their position among the definitions and follow those listed.",
+    description:
+      "Puts columns in the order order gives. Ids it omits keep their position among the definitions and follow those listed.",
   },
   {
     name: "moveColumnBefore(orderedIds, movedId, beforeId)",
     type: "ColumnOrderState",
-    description: "Moves one column id to sit before another, or to the end when beforeId is null. Returns the same reference for a move that changes nothing.",
+    description:
+      "Moves one column id to sit before another, or to the end when beforeId is null. Returns the same reference for a move that changes nothing.",
   },
   {
     name: "movesColumn(orderedIds, movedId, beforeId)",
     type: "boolean",
-    description: "Whether moving movedId in front of beforeId would rearrange anything, for a drop indicator that promises only real moves.",
+    description:
+      "Whether moving movedId in front of beforeId would rearrange anything, for a drop indicator that promises only real moves.",
   },
   {
     name: "resolveDropBefore(orderedIds, targetId, side)",
     type: "string | null",
-    description: "\"After C\" and \"before D\" name the same gap — this collapses either side of a drop to the one id it lands in front of.",
+    description:
+      '"After C" and "before D" name the same gap — this collapses either side of a drop to the one id it lands in front of.',
   },
 ];
 
