@@ -48,6 +48,22 @@ pnpm --filter @gridkitjs/core test   # one package
 `react` still passes `--passWithNoTests`; drop that flag once it has real
 tests. Prefer testing logic in `core`, where no DOM is required.
 
+## Docs
+
+Each published package keeps its own docs under `packages/<pkg>/docs/*.mdx`,
+with page order controlled by that folder's `_meta.json`. Nested topics live
+in subfolders with their own `_meta.json` — e.g.
+`packages/react/docs/columns/`.
+
+Keeping these current is a priority, not a follow-up task. A new public API,
+component, or prop needs a doc page — or a new section on an existing one —
+in the same change that adds it; a change in behaviour needs the existing
+page updated to match. Treat this with the same weight as the changeset
+requirement below: a PR that changes public behaviour without updating docs
+has not finished, the same way one without a changeset hasn't. The two rules
+are complementary — code changes need a changeset, user-facing changes need
+docs, and a PR can need either, both, or neither depending on what changed.
+
 ## Standards
 
 CI runs exactly this, in order:
@@ -175,6 +191,9 @@ Branch names take the commit type as their prefix — `feat/`, `fix/`,
 needs it. A PR touching a published package without one has not finished:
 nothing else will bump the version, so the change ships invisibly or not at
 all.
+
+**Doc updates belong in the same PR**, for the same reason: a behaviour
+change and its doc page shouldn't ship in separate PRs, or they drift apart.
 
 CI runs the sequence under **Standards** on every PR, in that order. Run it
 locally first rather than using CI to find what a single command would have.
