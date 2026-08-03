@@ -59,6 +59,19 @@ const propRows: readonly PropRow[] = [
     description: "The rows to render.",
   },
   {
+    name: "getRowId",
+    type: "(row: Row, index: number) => string",
+    default: "row position",
+    description:
+      "A row's stable identity, for state keyed by it. Give one for data that sorts, filters or pages.",
+  },
+  {
+    name: "label",
+    type: "string",
+    description:
+      "The grid's accessible name, announced when it takes focus. Use labelledBy for a heading already on the page.",
+  },
+  {
     name: "borders",
     type: '"horizontal" | "vertical" | "all" | "none"',
     description: "Which cell borders to draw.",
@@ -95,6 +108,8 @@ function PropsTable() {
       <DataGridComponent
         columns={propColumns}
         dataSource={propRows}
+        getRowId={(row) => row.name}
+        label="DataGrid props"
         resizeMode="fit"
         borders="horizontal"
         hoverable={{ rows: false, cells: false, columns: false }}
@@ -176,6 +191,8 @@ export default function App() {
         <DataGridComponent
           columns={columns}
           dataSource={rows}
+          getRowId={(row) => String(row.Id)}
+          label="Application costs"
           borders="all"
           resizableColumns
           reorderableColumns

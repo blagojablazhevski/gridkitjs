@@ -21,6 +21,7 @@ import GridBody from "./components/GridBody";
 import useColumnDrag, { type DropTarget } from "./useColumnDrag";
 import useColumnResize from "./useColumnResize";
 import useElementWidth from "./useElementWidth";
+import useGridNavigation, { HEADER_ROW } from "./useGridNavigation";
 
 /**
  * A column whose header and cells may render arbitrary React content.
@@ -103,6 +104,16 @@ export interface DataGridProps<Row> {
    * the order as it was does not call it.
    */
   onColumnOrderChange?: ((event: ColumnOrderEvent) => void) | undefined;
+  /**
+   * The grid's accessible name, announced when it takes focus. A grid without
+   * one is read only as "grid", which says nothing about which grid.
+   */
+  label?: string | undefined;
+  /**
+   * The id of an element naming the grid, for a heading already on the page.
+   * Takes precedence over `label`, as `aria-labelledby` does.
+   */
+  labelledBy?: string | undefined;
 }
 
 export function DataGridComponent<Row>({
@@ -119,6 +130,8 @@ export function DataGridComponent<Row>({
   columnSizeDefaults,
   onColumnResize,
   onColumnOrderChange,
+  label,
+  labelledBy,
 }: DataGridProps<Row>) {
   const hoverRows = hoverable?.rows ?? true;
   const hoverColumns = hoverable?.columns ?? true;
@@ -133,6 +146,7 @@ export function DataGridComponent<Row>({
   const [order, setOrder] = useState<ColumnOrderState>(
     defaultColumnOrder ?? [],
   );
+  const [announcement, setAnnouncement] = useState("");
 
   /**
    * The rows as rendered, each carrying the id everything downstream keys it
@@ -194,12 +208,54 @@ export function DataGridComponent<Row>({
     reorderableColumns,
   ]);
 
+  /**
+   * What a column is called in an announcement. `label` carries whatever a
+   * `headerTemplate` returned, which need not be text at all, so the field
+   * path stands in whenever it is not.
+   */
+  function columnName(columnId: string): string {
+    const entry = resolved.find((candidate) => candidate.id === columnId);
+    if (entry === undefined) {
+      return columnId;
+    }
+    return typeof entry.label === "string" ? entry.label : entry.column.field;
+  }
+
+  /**
+   * Reports a change no visual cue can carry to a screen reader. Held as state
+   * rather than written to the DOM directly so React owns the one element the
+   * live region watches.
+   */
+  function announce(message: string): void {
+    setAnnouncement(message);
+  }
+
+  /**
+   * Wrapped rather than announced from the resize hook, which reports the
+   * continuous `"move"` phase as well — a live region given every frame of a
+   * drag says nothing an assistive technology can keep up with.
+   */
+  function handleColumnResize(event: ColumnResizeEvent): void {
+    onColumnResize?.(event);
+    if (event.phase === "end") {
+      announce(
+        `${columnName(event.columnId)}, ${String(Math.round(event.width))} pixels wide`,
+      );
+    }
+  }
+
   const resize = useColumnResize<Row>({
     tableRef,
     sizing,
     setSizing,
     columnSizeDefaults,
-    onColumnResize,
+    onColumnResize: handleColumnResize,
+  });
+
+  const nav = useGridNavigation({
+    tableRef,
+    rowCount: rows.length,
+    columnCount: resolved.length,
   });
 
   /**
@@ -224,8 +280,19 @@ export function DataGridComponent<Row>({
     if (next === displayedIds) {
       return;
     }
+    const position = next.indexOf(movedId);
     setOrder(next);
     onColumnOrderChange?.({ columnId: movedId, order: next });
+    announce(
+      `${columnName(movedId)}, column ${String(position + 1)} of ${String(next.length)}`,
+    );
+    /**
+     * The tab stop travels with the column. React reorders the headers by key,
+     * so the browser's focus stays on the moved one by itself — without this
+     * the stop would be left on whichever column took its index, and the next
+     * arrow key would appear to do nothing.
+     */
+    nav.focusCell(HEADER_ROW, position);
   }
 
   const drag = useColumnDrag<Row>({ order: displayedIds, onDrop: handleDrop });
@@ -234,6 +301,19 @@ export function DataGridComponent<Row>({
     <div className="gridkit-data-grid-viewport" ref={viewportRef}>
       <table
         ref={tableRef}
+        /*
+         * `role="grid"` rather than the table's own semantics: it is what makes
+         * the arrow keys a navigation the grid owns, and later what lets a row
+         * report whether it is selected. It obliges the single tab stop
+         * `useGridNavigation` keeps.
+         */
+        role="grid"
+        // The header is a row too, and counted from one.
+        aria-rowcount={rows.length + 1}
+        aria-colcount={resolved.length}
+        {...(labelledBy !== undefined && { "aria-labelledby": labelledBy })}
+        {...(labelledBy === undefined &&
+          label !== undefined && { "aria-label": label })}
         // Widths are only honoured exactly when the table is as wide as its
         // columns; at `100%` the fixed layout redistributes the difference.
         style={{ width: totalColumnWidth(resolved) }}
@@ -252,13 +332,26 @@ export function DataGridComponent<Row>({
             <col key={entry.id} style={{ width: entry.width }} />
           ))}
         </colgroup>
-        <GridHeader<Row> columns={resolved} resize={resize} drag={drag} />
+        <GridHeader<Row>
+          columns={resolved}
+          resize={resize}
+          drag={drag}
+          nav={nav}
+        />
         <GridBody<Row>
           columns={resolved}
           rows={rows}
           activeColumnId={resize.activeColumnId}
+          nav={nav}
         />
       </table>
+      {/*
+       * Outside the table, which admits no `div`, and polite so it waits for a
+       * pause rather than cutting across what the user is already hearing.
+       */}
+      <div className="gridkit-sr-only" role="status" aria-live="polite">
+        {announcement}
+      </div>
     </div>
   );
 }
