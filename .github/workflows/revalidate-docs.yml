@@ -1,0 +1,25 @@
+name: Revalidate docs
+
+# Notifies the website to refresh cached docs content after a push that
+# touches any package's docs/ folder, so edits go live without a redeploy.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "packages/*/docs/**"
+
+jobs:
+  revalidate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sign and send revalidation request
+        env:
+          SECRET: ${{ secrets.DOCS_REVALIDATE_SECRET }}
+          URL: ${{ vars.WEBSITE_REVALIDATE_URL }}
+        run: |
+          body='{"ref":"${{ github.ref }}"}'
+          signature=$(printf '%s' "$body" | openssl dgst -sha256 -hmac "$SECRET" | sed 's/^.* //')
+          curl --fail-with-body -sS -X POST "$URL" \
+            -H "Content-Type: application/json" \
+            -H "X-Hub-Signature-256: sha256=$signature" \
+            -d "$body"
