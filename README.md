@@ -135,14 +135,16 @@ hot-reloads the playground immediately; never build to see a change.
 
 ## Tests
 
-Vitest. Test files sit next to the code as `*.test.ts` in `src/`.
+Vitest for logic in `core` and `react`; Playwright component tests
+(Chromium only) for `react`'s `DataGrid`, mounting it in isolation against
+the real Tailwind theme rather than jsdom.
 
 ```bash
-pnpm test                          # all packages
-pnpm --filter @gridkitjs/core test   # one package
+pnpm test                              # Vitest, all packages
+pnpm --filter playground test:e2e        # Playwright, DataGrid only
 ```
 
-Prefer testing logic in `core`, where no DOM is required.
+See [AGENTS.md](AGENTS.md) for the full contributor guide.
 
 ## Standards
 
