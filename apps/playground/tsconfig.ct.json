@@ -1,0 +1,22 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.ct.tsbuildinfo",
+    "types": ["node", "vite/client"],
+    "allowArbitraryExtensions": true,
+    "allowImportingTsExtensions": true,
+    "moduleDetection": "force",
+
+    /* This suite never ships, so it only ever type-checks. */
+    "noEmit": true,
+    "declaration": false,
+    "declarationMap": false,
+
+    /* Linting */
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["playwright", "tests-ct", "playwright-ct.config.ts"]
+}

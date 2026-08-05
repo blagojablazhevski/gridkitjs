@@ -1,0 +1,388 @@
+// Coverage is only collected when tests import `test`/`expect` from
+// ./support/coverage rather than directly from the CT package — see that
+// file for why.
+import type { Page } from "@playwright/test";
+import type { MountResult } from "@playwright/experimental-ct-react";
+import type { ColumnDefinition, ColumnResizeEvent } from "@gridkitjs/core";
+import { DataGridComponent } from "@gridkitjs/react";
+import { expect, test } from "./support/coverage";
+import { mountGrid, updateGrid } from "./support/mountGrid";
+
+interface Row {
+  id: string;
+  name: string;
+  description: string;
+}
+
+function buildRows(count: number): Row[] {
+  return Array.from({ length: count }, (_, index) => ({
+    id: `row-${String(index)}`,
+    name: `Row ${String(index)}`,
+    description: "short",
+  }));
+}
+
+const columns: readonly ColumnDefinition<Row>[] = [
+  { field: "id", width: 80 },
+  { field: "name", width: 120, minWidth: 60, maxWidth: 200 },
+  { field: "description", width: 100 },
+];
+
+function headerHandle(root: MountResult, index: number) {
+  return root.locator("thead th").nth(index).locator(".header-resize-handle");
+}
+
+async function colWidth(root: MountResult, index: number): Promise<number> {
+  return root
+    .locator("colgroup col")
+    .nth(index)
+    .evaluate((element) => parseFloat((element as HTMLElement).style.width));
+}
+
+/** Presses the pointer down on `handle`'s center, without releasing it. */
+async function pointerDragStart(
+  page: Page,
+  handle: ReturnType<typeof headerHandle>,
+): Promise<{ x: number; y: number }> {
+  const box = await handle.boundingBox();
+  if (box === null) {
+    throw new Error("resize handle is not visible");
+  }
+  const x = box.x + box.width / 2;
+  const y = box.y + box.height / 2;
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  return { x, y };
+}
+
+test("dragging a resize handle updates width continuously, with no minimum-distance threshold", async ({
+  mount,
+  page,
+}) => {
+  const events: ColumnResizeEvent[] = [];
+  const root = await mountGrid(
+    mount,
+    <DataGridComponent
+      columns={columns}
+      dataSource={buildRows(2)}
+      label="Resize"
+      resizableColumns
+      resizeMode="fixed"
+      onColumnResize={(event) => {
+        events.push(event);
+      }}
+    />,
+  );
+  const start = await pointerDragStart(page, headerHandle(root, 0));
+  await page.mouse.move(start.x + 20, start.y);
+  expect(events.length).toBeGreaterThan(0);
+  expect(events.every((event) => event.phase === "move")).toBe(true);
+  await page.mouse.up();
+});
+
+test('releasing the pointer fires one final onColumnResize with phase "end"', async ({
+  mount,
+  page,
+}) => {
+  const events: ColumnResizeEvent[] = [];
+  const root = await mountGrid(
+    mount,
+    <DataGridComponent
+      columns={columns}
+      dataSource={buildRows(2)}
+      label="Resize end"
+      resizableColumns
+      resizeMode="fixed"
+      onColumnResize={(event) => {
+        events.push(event);
+      }}
+    />,
+  );
+  const start = await pointerDragStart(page, headerHandle(root, 0));
+  await page.mouse.move(start.x + 30, start.y);
+  await page.mouse.up();
+  expect(events.at(-1)?.phase).toBe("end");
+});
+
+test("Escape mid-resize restores the width captured at drag-start", async ({
+  mount,
+  page,
+}) => {
+  const events: ColumnResizeEvent[] = [];
+  const root = await mountGrid(
+    mount,
+    <DataGridComponent
+      columns={columns}
+      dataSource={buildRows(2)}
+      label="Resize cancel"
+      resizableColumns
+      resizeMode="fixed"
+      onColumnResize={(event) => {
+        events.push(event);
+      }}
+    />,
+  );
+  const originalWidth = await colWidth(root, 0);
+  const start = await pointerDragStart(page, headerHandle(root, 0));
+  await page.mouse.move(start.x + 40, start.y);
+  expect(await colWidth(root, 0)).not.toBeCloseTo(originalWidth, 0);
+
+  await page.keyboard.press("Escape");
+
+  expect(await colWidth(root, 0)).toBeCloseTo(originalWidth, 0);
+  const last = events.at(-1);
+  expect(last?.phase).toBe("end");
+  expect(last?.width).toBeCloseTo(originalWidth, 0);
+});
+
+test("cancelling one column's drag with Escape does not clobber another column resized by keyboard mid-gesture", async ({
+  mount,
+  page,
+}) => {
+  /**
+   * Known bug, tracked rather than fixed here: `useColumnResize.ts` captures
+   * `base = sizing` once at drag-start and `Escape`'s `setSizing(base)`
+   * restores that stale snapshot outright, discarding any *other* column's
+   * width changed via keyboard while the drag was still open. Confirmed by
+   * this test: column 1's width reverts to its pre-nudge value instead of
+   * surviving column 0's cancellation. Remove `test.fail()` once fixed.
+   */
+  test.fail();
+  const root = await mountGrid(
+    mount,
+    <DataGridComponent
+      columns={columns}
+      dataSource={buildRows(2)}
+      label="Concurrent"
+      resizableColumns
+      resizeMode="fixed"
+    />,
+    { width: 800 },
+  );
+  const before = await colWidth(root, 1);
+
+  // Start dragging column 0 without releasing.
+  const start = await pointerDragStart(page, headerHandle(root, 0));
+  await page.mouse.move(start.x + 30, start.y);
+
+  // Nudge column 1 via keyboard while column 0's drag is still open — pointer
+  // capture pins the drag to column 0's handle, but it does not hold
+  // keyboard focus, so this is a real, reachable interleaving.
+  const headerB = root.locator("thead th").nth(1);
+  await headerB.focus();
+  await headerB.press("Alt+ArrowRight");
+  const nudged = await colWidth(root, 1);
+  expect(nudged).not.toBeCloseTo(before, 0);
+
+  // Cancel column 0's drag.
+  await page.keyboard.press("Escape");
+
+  // Column 1's keyboard-driven width must survive column 0's cancellation.
+  expect(await colWidth(root, 1)).toBeCloseTo(nudged, 0);
+  await page.mouse.up();
+});
+
+test("double-click sizes an over-wide column down to its content", async ({
+  mount,
+}) => {
+  const wideColumns: readonly ColumnDefinition<Row>[] = [
+    { field: "id", width: 300 },
+    { field: "name", width: 120 },
+  ];
+  const root = await mountGrid(
+    mount,
+    <DataGridComponent
+      columns={wideColumns}
+      dataSource={buildRows(3)}
+      label="Fit content down"
+      resizableColumns
+      resizeMode="fixed"
+    />,
+  );
+  const before = await colWidth(root, 0);
+  await headerHandle(root, 0).dblclick();
+  const after = await colWidth(root, 0);
+  expect(after).toBeLessThan(before);
+  expect(after).toBeGreaterThan(0);
+});
+
+test("double-click sizes an under-wide column up to its content, not only down", async ({
+  mount,
+}) => {
+  const rows: Row[] = [
+    {
+      id: "row-0",
+      name: "Row 0",
+      description:
+        "A description long enough that a 40px column cannot show it in full",
+    },
+  ];
+  const narrowColumns: readonly ColumnDefinition<Row>[] = [
+    { field: "description", width: 40 },
+  ];
+  const root = await mountGrid(
+    mount,
+    <DataGridComponent
+      columns={narrowColumns}
+      dataSource={rows}
+      label="Fit content up"
+      resizableColumns
+      resizeMode="fixed"
+    />,
+    { width: 900 },
+  );
+  const before = await colWidth(root, 0);
+  expect(before).toBeCloseTo(40, 0);
+  await headerHandle(root, 0).dblclick();
+  expect(await colWidth(root, 0)).toBeGreaterThan(before);
+});
+
+test("double-click on a column with no rows is a no-op", async ({ mount }) => {
+  /**
+   * Known bug, tracked rather than fixed here: `measureColumnContent.ts`'s
+   * `[data-gridkit-column="..."]` selector isn't scoped to body `<td>`
+   * cells — the header `<th>` carries the same attribute — so with zero
+   * rows it measures the header label instead of finding no cells and
+   * returning `null`. Confirmed by this test: the column resizes to fit its
+   * header text rather than staying untouched. Remove `test.fail()` once
+   * the selector is scoped to `td[data-gridkit-column]`.
+   */
+  test.fail();
+  const events: ColumnResizeEvent[] = [];
+  const root = await mountGrid(
+    mount,
+    <DataGridComponent
+      columns={columns}
+      dataSource={[]}
+      label="Empty fit"
+      resizableColumns
+      resizeMode="fixed"
+      onColumnResize={(event) => {
+        events.push(event);
+      }}
+    />,
+  );
+  const before = await colWidth(root, 0);
+  await headerHandle(root, 0).dblclick();
+  expect(await colWidth(root, 0)).toBeCloseTo(before, 0);
+  expect(events).toHaveLength(0);
+});
+
+test("double-click still measures correctly when the column id needs CSS.escape", async ({
+  mount,
+}) => {
+  const dottedColumns: readonly ColumnDefinition<Row>[] = [
+    { field: "name", id: "Row.Name", width: 250 },
+  ];
+  const root = await mountGrid(
+    mount,
+    <DataGridComponent
+      columns={dottedColumns}
+      dataSource={buildRows(2)}
+      label="Dotted id"
+      resizableColumns
+      resizeMode="fixed"
+    />,
+  );
+  const before = await colWidth(root, 0);
+  await headerHandle(root, 0).dblclick();
+  expect(await colWidth(root, 0)).toBeLessThan(before);
+});
+
+test("keyboard nudge stays clamped at the column's min and max width", async ({
+  mount,
+}) => {
+  const root = await mountGrid(
+    mount,
+    <DataGridComponent
+      columns={columns}
+      dataSource={buildRows(2)}
+      label="Clamp"
+      resizableColumns
+      resizeMode="fixed"
+    />,
+  );
+  // columns[1] ("name") starts at 120, with bounds 60..200.
+  const header = root.locator("thead th").nth(1);
+  await header.focus();
+  for (let i = 0; i < 20; i += 1) {
+    await header.press("Alt+ArrowLeft");
+  }
+  expect(await colWidth(root, 1)).toBeCloseTo(60, 0);
+
+  for (let i = 0; i < 20; i += 1) {
+    await header.press("Alt+ArrowRight");
+  }
+  expect(await colWidth(root, 1)).toBeCloseTo(200, 0);
+});
+
+test("resizableColumns={false} renders no resize handle, and Alt+Arrow does nothing at all", async ({
+  mount,
+}) => {
+  const root = await mountGrid(
+    mount,
+    <DataGridComponent
+      columns={columns}
+      dataSource={buildRows(2)}
+      label="No resize"
+    />,
+  );
+  await expect(root.locator(".header-resize-handle")).toHaveCount(0);
+
+  const header = root.locator("thead th").first();
+  await header.focus();
+  await header.press("Alt+ArrowRight");
+  // Not even navigation claims it — the tab stop stays put.
+  await expect(header).toHaveAttribute("tabindex", "0");
+});
+
+test('resizing the container under resizeMode="fit" changes widths without ever calling onColumnResize', async ({
+  mount,
+}) => {
+  const events: ColumnResizeEvent[] = [];
+  function grid() {
+    return (
+      <DataGridComponent
+        columns={columns}
+        dataSource={buildRows(2)}
+        label="Auto-fit"
+        onColumnResize={(event) => {
+          events.push(event);
+        }}
+      />
+    );
+  }
+  const root = await mountGrid(mount, grid(), { width: 500 });
+  const before = await colWidth(root, 0);
+  await updateGrid(root, grid(), { width: 900 });
+  // The container's resize reaches `useElementWidth` through a
+  // `ResizeObserver` callback, which fires asynchronously after layout —
+  // not synchronously with the prop update — hence the poll.
+  await expect.poll(() => colWidth(root, 0)).not.toBeCloseTo(before, 0);
+  expect(events).toHaveLength(0);
+});
+
+test("the live region announces the new width only once the drag ends, not on every move", async ({
+  mount,
+  page,
+}) => {
+  const root = await mountGrid(
+    mount,
+    <DataGridComponent
+      columns={columns}
+      dataSource={buildRows(2)}
+      label="Announce"
+      resizableColumns
+      resizeMode="fixed"
+    />,
+  );
+  const status = root.locator('[role="status"]');
+  await expect(status).toHaveText("");
+
+  const start = await pointerDragStart(page, headerHandle(root, 0));
+  await page.mouse.move(start.x + 25, start.y);
+  await expect(status).toHaveText("");
+
+  await page.mouse.up();
+  await expect(status).toContainText("pixels wide");
+});

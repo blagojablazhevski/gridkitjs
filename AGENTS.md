@@ -51,15 +51,50 @@ or "drag".
 
 ## Tests
 
-Vitest. Test files sit next to the code as `*.test.ts` in `src/`.
+Two layers, at two different points in the stack.
+
+**Vitest** covers logic — reducers, selection/sizing/ordering transforms,
+anything that runs without a DOM. Test files sit next to the code as
+`*.test.ts` in `src/`.
 
 ```bash
-pnpm test                          # all packages
-pnpm --filter @gridkitjs/core test   # one package
+pnpm test                            # all packages
+pnpm --filter @gridkitjs/core test     # one package
 ```
 
 `react` still passes `--passWithNoTests`; drop that flag once it has real
-tests. Prefer testing logic in `core`, where no DOM is required.
+Vitest tests of its own. Prefer testing logic in `core`, where no DOM is
+required.
+
+**Playwright component tests** cover `react`'s `DataGrid` — pointer drags,
+keyboard navigation, real layout and `ResizeObserver`, all of which need an
+actual browser rather than jsdom. They live in `apps/playground/tests-ct/`,
+mounting `DataGridComponent` in isolation through
+`@playwright/experimental-ct-react` rather than through the playground's own
+demo (`App.tsx`), against the real `theme-tailwind` stylesheet so measured
+widths and paddings are real ones. Chromium only — this is an internal
+suite, not a cross-browser guarantee for a published package.
+
+```bash
+pnpm --filter playground test:e2e             # run the suite
+pnpm --filter playground test:e2e:ui           # same, with Playwright's UI
+pnpm --filter playground test:e2e:coverage     # instrumented; enforces 80% line/statement/function coverage over DataGrid/
+```
+
+`test:e2e` is not part of `pnpm test` and does not run under `pnpm -r test`,
+by design — it's a separate, slower check, invoked explicitly rather than on
+every `pnpm test`. A new `DataGrid` behavior needs a Playwright test the same
+way new `core` logic needs a Vitest one; see `apps/playground/tests-ct/` for
+the existing split across `rendering`, `column-resize`, `column-reorder`,
+`keyboard-navigation`, `selection` and `accessibility` spec files, and add to
+whichever one already covers the area being changed.
+
+A couple of tests in `column-resize.spec.tsx` are marked `test.fail()` —
+known, tracked bugs the suite found (a resize-cancel race in
+`useColumnResize.ts`, and a selector scoping issue in
+`measureColumnContent.ts`) rather than test mistakes. Each has a comment
+explaining the bug; fix the source and remove the marker together, don't
+just delete the test.
 
 ## Docs
 
