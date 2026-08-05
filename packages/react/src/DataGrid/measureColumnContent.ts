@@ -16,7 +16,7 @@ export default function measureColumnContent(
   columnId: string,
 ): number | null {
   const cells = table.querySelectorAll<HTMLElement>(
-    `[data-gridkit-column="${CSS.escape(columnId)}"]`,
+    `td[data-gridkit-column="${CSS.escape(columnId)}"]`,
   );
   const range = document.createRange();
   let widest: number | null = null;
