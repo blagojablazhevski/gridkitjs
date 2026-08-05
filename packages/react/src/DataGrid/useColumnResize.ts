@@ -105,7 +105,12 @@ export default function useColumnResize<Row>({
 
     function end(): void {
       stop();
-      commit(base, session.columnId, width, "end");
+      // A click with no intervening `move` — as every double-click's two
+      // constituent clicks are — leaves `width` at `startWidth`. Committing
+      // that anyway would fire a spurious onColumnResize on every click.
+      if (width !== session.startWidth) {
+        commit(base, session.columnId, width, "end");
+      }
     }
 
     /**

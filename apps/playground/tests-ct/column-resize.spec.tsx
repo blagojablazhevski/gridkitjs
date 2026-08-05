@@ -229,16 +229,6 @@ test("double-click sizes an under-wide column up to its content, not only down",
 });
 
 test("double-click on a column with no rows is a no-op", async ({ mount }) => {
-  /**
-   * Known bug, tracked rather than fixed here: `measureColumnContent.ts`'s
-   * `[data-gridkit-column="..."]` selector isn't scoped to body `<td>`
-   * cells — the header `<th>` carries the same attribute — so with zero
-   * rows it measures the header label instead of finding no cells and
-   * returning `null`. Confirmed by this test: the column resizes to fit its
-   * header text rather than staying untouched. Remove `test.fail()` once
-   * the selector is scoped to `td[data-gridkit-column]`.
-   */
-  test.fail();
   const events: ColumnResizeEvent[] = [];
   const root = await mountGrid(
     mount,
