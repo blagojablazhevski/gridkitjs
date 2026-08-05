@@ -139,15 +139,6 @@ test("cancelling one column's drag with Escape does not clobber another column r
   mount,
   page,
 }) => {
-  /**
-   * Known bug, tracked rather than fixed here: `useColumnResize.ts` captures
-   * `base = sizing` once at drag-start and `Escape`'s `setSizing(base)`
-   * restores that stale snapshot outright, discarding any *other* column's
-   * width changed via keyboard while the drag was still open. Confirmed by
-   * this test: column 1's width reverts to its pre-nudge value instead of
-   * surviving column 0's cancellation. Remove `test.fail()` once fixed.
-   */
-  test.fail();
   const root = await mountGrid(
     mount,
     <DataGridComponent
