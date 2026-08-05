@@ -2,3 +2,7 @@ dist
 node_modules
 pnpm-lock.yaml
 .history
+playwright-report
+test-results
+coverage
+apps/playground/playwright/.cache
