@@ -18,6 +18,9 @@ export type {
   ColumnSelectionChangeEvent,
   ColumnSizeDefaults,
   ColumnSizingState,
+  ColumnSortEntry,
+  ColumnSortEvent,
+  ColumnSortState,
   ColumnsSelectEvent,
   ColumnType,
   ColumnWrapConfig,
@@ -34,6 +37,7 @@ export type {
   SelectionDiff,
   SelectionMode,
   SelectionState,
+  SortDirection,
 } from "./types";
 export {
   accessDotted,
@@ -72,3 +76,10 @@ export {
   sizeColumnToContent,
   totalColumnWidth,
 } from "./util/sizing";
+export {
+  compareValues,
+  sortDirectionFor,
+  sortPriorityFor,
+  sortRows,
+  toggleColumnSort,
+} from "./util/sorting";

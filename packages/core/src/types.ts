@@ -124,6 +124,8 @@ export interface ColumnDefinition<Row, Node = string> {
    * grid-level default. A column that cannot move can still be moved past.
    */
   reorderable?: boolean;
+  /** Whether this column can be sorted, overriding the grid-level default. */
+  sortable?: boolean;
   /**
    * Lets this column's header and/or cell text wrap onto multiple lines
    * instead of the grid's default single line with an ellipsis. Off by
@@ -256,6 +258,31 @@ export type DropSide = "before" | "after";
 export interface ColumnOrderEvent {
   readonly columnId: string;
   readonly order: ColumnOrderState;
+}
+
+/** Which way a column sorts. */
+export type SortDirection = "asc" | "desc";
+
+/** One column's place in a stacked sort, and which way it sorts. */
+export interface ColumnSortEntry {
+  readonly columnId: string;
+  readonly direction: SortDirection;
+}
+
+/**
+ * The active sort, in priority order: index 0 sorts first, ties broken by
+ * index 1, and so on down the stack. Empty for an unsorted grid, mirroring
+ * `SelectionState`'s empty array for "nothing selected".
+ */
+export type ColumnSortState = readonly ColumnSortEntry[];
+
+/**
+ * Reports a user sort change whole — the stack to persist from. No `phase`:
+ * unlike a resize, a sort has no in-progress state, only before and after.
+ */
+export interface ColumnSortEvent {
+  readonly columnId: string;
+  readonly sort: ColumnSortState;
 }
 
 /**

@@ -1,0 +1,36 @@
+---
+title: "Column sorting"
+description: "Clicking a header's sort toggle with sortableColumns, and stacking with Shift-click."
+---
+
+sortableColumns turns on a clickable sort toggle in every header, unless a column sets its own sortable to override the grid. A plain click sorts by that column alone, cycling ascending, descending, and off; Shift-click adds or updates the column in a priority-ordered stack instead of replacing it — sort by `Id` ascending, then by `Application.Name` descending as a tiebreaker.
+
+## Click to sort, Shift-click to stack
+
+<LiveExampleFrame title="sortableColumns">
+  <ColumnSortingExample />
+</LiveExampleFrame>
+
+```ts
+<DataGridComponent
+  columns={columns}
+  dataSource={rows}
+  sortableColumns
+  onColumnSortChange={({ sort }) => persist(sort)}
+/>;
+```
+
+## Props
+
+| Prop                 | Type                                 | Default | Description                                                                                |
+| -------------------- | ------------------------------------ | ------- | ------------------------------------------------------------------------------------------ |
+| `sortableColumns`    | `boolean`                            | `false` | Whether columns can be sorted by clicking their header toggle.                             |
+| `defaultColumnSort`  | `readonly { columnId, direction }[]` |         | The sort to start with, in priority order. Uncontrolled.                                   |
+| `onColumnSortChange` | `(event: ColumnSortEvent) => void`   |         | Called once when the user changes the sort — a toggle, a stack, or a clear back to "none". |
+| `column.sortable`    | `boolean`                            |         | Per-column override of sortableColumns.                                                    |
+
+## Keyboard & pointer interactions
+
+- Click a header's sort toggle to cycle it through ascending, descending, and off.
+- Shift-click a toggle to add or update that column in the sort's stack instead of replacing it.
+- With a header focused, <Kbd>Alt</Kbd>+<Kbd>ArrowUp</Kbd> cycles its sort the same way a click does; <Kbd>Alt</Kbd>+<Kbd>Shift</Kbd>+<Kbd>ArrowUp</Kbd> stacks it the same way a Shift-click does.

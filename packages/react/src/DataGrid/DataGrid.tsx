@@ -6,6 +6,7 @@ import {
   moveColumnBefore,
   resolveColumnWidths,
   resolveRowId,
+  sortRows,
   totalColumnWidth,
   type ColumnDefinition as CoreColumnDefinition,
   type ResolvedColumn as CoreResolvedColumn,
@@ -14,6 +15,8 @@ import {
   type ColumnResizeEvent,
   type ColumnSizeDefaults,
   type ColumnSizingState,
+  type ColumnSortEvent,
+  type ColumnSortState,
   type ResolvedRow,
   type CellSelectionState,
   type SelectableConfig,
@@ -30,6 +33,7 @@ import GridHeader from "./components/GridHeader";
 import GridBody from "./components/GridBody";
 import useColumnDrag, { type DropTarget } from "./useColumnDrag";
 import useColumnResize from "./useColumnResize";
+import useColumnSort from "./useColumnSort";
 import useElementWidth from "./useElementWidth";
 import useGridNavigation, { HEADER_ROW } from "./useGridNavigation";
 import useGridSelection, { type SelectionCallbacks } from "./useGridSelection";
@@ -155,6 +159,19 @@ export interface DataGridProps<Row> extends SelectionCallbacks<Row> {
    */
   onColumnOrderChange?: ((event: ColumnOrderEvent) => void) | undefined;
   /**
+   * Whether columns can be sorted by clicking their header toggle, unless a
+   * column says otherwise. Shift-click stacks a column into the sort instead
+   * of replacing it.
+   */
+  sortableColumns?: boolean | undefined;
+  /** The sort to start with, in priority order. Uncontrolled. */
+  defaultColumnSort?: ColumnSortState | undefined;
+  /**
+   * Called once when the user changes the sort — a toggle, a stack, or a
+   * clear back to "none".
+   */
+  onColumnSortChange?: ((event: ColumnSortEvent) => void) | undefined;
+  /**
    * The grid's accessible name, announced when it takes focus. A grid without
    * one is read only as "grid", which says nothing about which grid.
    */
@@ -184,6 +201,9 @@ export function DataGridComponent<Row>({
   columnSizeDefaults,
   onColumnResize,
   onColumnOrderChange,
+  sortableColumns = false,
+  defaultColumnSort,
+  onColumnSortChange,
   label,
   labelledBy,
   ...callbacks
@@ -201,6 +221,7 @@ export function DataGridComponent<Row>({
   const [order, setOrder] = useState<ColumnOrderState>(
     defaultColumnOrder ?? [],
   );
+  const [sort, setSort] = useState<ColumnSortState>(defaultColumnSort ?? []);
   const [announcement, setAnnouncement] = useState("");
   const [rowSelection, setRowSelection] = useState<SelectionState>(
     defaultRowSelection ?? [],
@@ -273,6 +294,18 @@ export function DataGridComponent<Row>({
   ]);
 
   /**
+   * `rows`, reordered by `sort` — needs `resolved` for each column's `field`
+   * and `type`, so it runs after sizing rather than alongside `rows` itself.
+   * Everything downstream that renders or interacts with row order reads
+   * this rather than `rows`, so a sort is what the user actually sees and
+   * clicks.
+   */
+  const sortedRows = useMemo(
+    () => sortRows(rows, sort, resolved),
+    [rows, sort, resolved],
+  );
+
+  /**
    * What a column is called in an announcement. `label` carries whatever a
    * `headerTemplate` returned, which need not be text at all, so the field
    * path stands in whenever it is not.
@@ -318,7 +351,7 @@ export function DataGridComponent<Row>({
 
   const nav = useGridNavigation({
     tableRef,
-    rowCount: rows.length,
+    rowCount: sortedRows.length,
     columnCount: resolved.length,
   });
 
@@ -361,8 +394,35 @@ export function DataGridComponent<Row>({
 
   const drag = useColumnDrag<Row>({ order: displayedIds, onDrop: handleDrop });
 
+  /**
+   * Wrapped the same way `handleColumnResize`/`handleDrop` are, so a toggle,
+   * a stack, or a clear back to "none" each get their own announcement.
+   */
+  function handleColumnSortChange(event: ColumnSortEvent): void {
+    onColumnSortChange?.(event);
+    const entry = event.sort.find(
+      (candidate) => candidate.columnId === event.columnId,
+    );
+    if (entry === undefined) {
+      announce(`${columnName(event.columnId)}, sort cleared`);
+      return;
+    }
+    const direction = entry.direction === "asc" ? "ascending" : "descending";
+    announce(
+      event.sort.length > 1
+        ? `${columnName(event.columnId)} sorted ${direction}, key ${String(event.sort.indexOf(entry) + 1)} of ${String(event.sort.length)}`
+        : `${columnName(event.columnId)} sorted ${direction}`,
+    );
+  }
+
+  const columnSort = useColumnSort<Row>({
+    sort,
+    setSort,
+    onColumnSortChange: handleColumnSortChange,
+  });
+
   const selection = useGridSelection<Row>({
-    rows,
+    rows: sortedRows,
     columns: resolved,
     selectable,
     rowSelection,
@@ -390,7 +450,7 @@ export function DataGridComponent<Row>({
          */
         role="grid"
         // The header is a row too, and counted from one.
-        aria-rowcount={rows.length + 1}
+        aria-rowcount={sortedRows.length + 1}
         aria-colcount={resolved.length}
         {...(multiselectable && { "aria-multiselectable": true })}
         {...(labelledBy !== undefined && { "aria-labelledby": labelledBy })}
@@ -449,12 +509,14 @@ export function DataGridComponent<Row>({
           columns={resolved}
           resize={resize}
           drag={drag}
+          sort={columnSort}
+          sortableColumns={sortableColumns}
           nav={nav}
           selection={selection}
         />
         <GridBody<Row>
           columns={resolved}
-          rows={rows}
+          rows={sortedRows}
           activeColumnId={resize.activeColumnId}
           nav={nav}
           selection={selection}

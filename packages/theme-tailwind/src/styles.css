@@ -277,6 +277,59 @@
     opacity: 0;
   }
 
+  /*
+   * Sits inline after the label rather than absolutely positioned like the
+   * resize handle: a sort toggle is something to click, not an edge to drag,
+   * so it takes up space in the header's own flow.
+   */
+  .gridkit-data-grid .header-sort-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.125rem;
+    margin-left: 0.25rem;
+    vertical-align: middle;
+    cursor: pointer;
+    color: var(--gridkit-fg-muted);
+  }
+
+  .gridkit-data-grid .header-sort-toggle svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+
+  /*
+   * Hidden until the column has a direction or the header is hovered or
+   * focused — an unsorted, un-hovered header stays quiet, the same restraint
+   * `.header-resize-grip` uses.
+   */
+  .gridkit-data-grid
+    .header-sort-toggle:not(.is-sorted-asc):not(.is-sorted-desc) {
+    opacity: 0;
+  }
+
+  .gridkit-data-grid .grid-header .header-cell:hover .header-sort-toggle,
+  .gridkit-data-grid .header-cell:focus-visible .header-sort-toggle {
+    opacity: 1;
+  }
+
+  .gridkit-data-grid .header-sort-toggle.is-sorted-asc,
+  .gridkit-data-grid .header-sort-toggle.is-sorted-desc {
+    opacity: 1;
+    color: var(--gridkit-accent);
+  }
+
+  /* One chevron covers both directions; `desc` is `asc` turned upside down. */
+  .gridkit-data-grid .header-sort-toggle.is-sorted-desc svg {
+    transform: rotate(180deg);
+  }
+
+  .gridkit-data-grid .header-sort-priority {
+    font-size: 0.625rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
   .gridkit-data-grid:not(.no-hover-columns) .grid-header .header-cell:hover {
     background-color: var(--gridkit-surface-muted);
   }
