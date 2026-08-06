@@ -195,10 +195,13 @@ export default function App() {
         Import from <code>@gridkitjs/react</code> and render it here. Drag a
         column edge to resize, or double-click it to fit the content. Drag a
         header itself to reorder — or focus one and press{" "}
-        <code>Ctrl+Arrow</code>. Tab into the grid and the arrow keys move cell
-        to cell; <code>Space</code> selects, <code>Shift+Click</code> takes a
-        range, <code>Ctrl+A</code> takes every row and <code>Escape</code> lets
-        them go.
+        <code>Ctrl+Arrow</code>. Click a header's sort toggle to cycle
+        ascending, descending and off; <code>Shift+Click</code> a second toggle
+        to stack it instead of replacing the sort — or focus a header and press{" "}
+        <code>Alt+ArrowUp</code> / <code>Alt+Shift+ArrowUp</code>. Tab into the
+        grid and the arrow keys move cell to cell; <code>Space</code> selects,{" "}
+        <code>Shift+Click</code> takes a range, <code>Ctrl+A</code> takes every
+        row and <code>Escape</code> lets them go.
       </p>
       <fieldset className="mt-4 flex gap-4 text-sm">
         <legend className="sr-only">Resize mode</legend>
@@ -227,6 +230,7 @@ export default function App() {
           borders="all"
           resizableColumns
           reorderableColumns
+          sortableColumns
           resizeMode={resizeMode}
           selectable={{
             rows: "multiple",
@@ -255,13 +259,23 @@ export default function App() {
               `onCellSelect — ${cell.columnId} of row ${cell.rowId} = ${String(cell.value)}`,
             );
           }}
+          onColumnSortChange={({ sort }) => {
+            const summary =
+              sort.length === 0
+                ? "cleared"
+                : sort
+                    .map((entry) => `${entry.columnId}:${entry.direction}`)
+                    .join(", ");
+            record(`onColumnSortChange — ${summary}`);
+          }}
         />
       </div>
-      <h2 className="mt-8 text-lg font-bold">Selection callbacks</h2>
+      <h2 className="mt-8 text-lg font-bold">Selection & sort callbacks</h2>
       <ol className="mt-2 min-h-24 rounded border border-gray-300 p-2 text-xs">
         {log.length === 0 ? (
           <li className="text-gray-500">
-            Click, Ctrl+Click or Shift+Click a row, a header or a cell.
+            Click, Ctrl+Click or Shift+Click a row, a header or a cell — or
+            click a header's sort toggle.
           </li>
         ) : (
           log.map((entry, index) => (

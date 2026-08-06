@@ -278,16 +278,24 @@
   }
 
   /*
-   * Sits inline after the label rather than absolutely positioned like the
-   * resize handle: a sort toggle is something to click, not an edge to drag,
-   * so it takes up space in the header's own flow.
+   * Docked to the header's own right edge, absolutely — like the resize
+   * handle, and for the same reason: sitting in the label's normal flow, a
+   * long label under `text-overflow: ellipsis` pushes the toggle out past
+   * where `overflow: hidden` clips it, leaving it unclickable (a real click
+   * there lands on the header cell instead and selects the column). Docked
+   * to a fixed offset, it stays inside the clipped area — and clear of the
+   * resize handle's own 6px strip at `right: 0`, so a resizable, sortable
+   * column keeps two independent hit targets rather than one shadowing the
+   * other.
    */
   .gridkit-data-grid .header-sort-toggle {
     display: inline-flex;
+    position: absolute;
+    top: 50%;
+    right: 0.75rem;
+    transform: translateY(-50%);
     align-items: center;
     gap: 0.125rem;
-    margin-left: 0.25rem;
-    vertical-align: middle;
     cursor: pointer;
     color: var(--gridkit-fg-muted);
   }

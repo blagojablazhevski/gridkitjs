@@ -349,6 +349,31 @@ test("sorts through a dotted field path", async ({ mount }) => {
   expect(values).toEqual(["Alpha", "Beta"]);
 });
 
+test("clicking the sort toggle on a grid that is also reorderableColumns sorts rather than starting a drag", async ({
+  mount,
+}) => {
+  // A pointerdown on the toggle must not bubble to the header's own
+  // reorder-drag start — that gesture calls setPointerCapture, which would
+  // otherwise redirect the click that follows to the header itself instead
+  // of the toggle, so the click is read as nothing rather than a sort.
+  const root = await mountGrid(
+    mount,
+    <DataGridComponent
+      columns={columns}
+      dataSource={buildRows()}
+      label="Sortable and reorderable"
+      sortableColumns
+      reorderableColumns
+    />,
+  );
+  const header = headers(root).nth(1);
+
+  await toggle(header).click();
+
+  await expect(header).toHaveAttribute("aria-sort", "ascending");
+  expect(await names(root)).toEqual(["Alice", "Bravo", "Charlie"]);
+});
+
 test("row selection is preserved by identity across a sort that moves rows to new positions", async ({
   mount,
 }) => {

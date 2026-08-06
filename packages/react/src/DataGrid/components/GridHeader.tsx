@@ -211,6 +211,16 @@ export default function GridHeader<Row>({
                     .join(" ")}
                   aria-hidden="true"
                   tabIndex={-1}
+                  onPointerDown={(event) => {
+                    /*
+                     * Otherwise a reorderable header's own `onPointerDown`
+                     * sees this bubble up and starts a column drag, whose
+                     * `setPointerCapture` then redirects the click that
+                     * follows to the `th` — the same reason `startResize`
+                     * stops it for the resize handle.
+                     */
+                    event.stopPropagation();
+                  }}
                   onClick={(event) => {
                     sort.toggle(entry, { shiftKey: event.shiftKey });
                   }}
