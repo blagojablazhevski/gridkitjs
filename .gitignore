@@ -12,7 +12,7 @@ coverage
 playwright-report/
 test-results/
 .nyc_output/
-playwright/.cache/
+**/playwright/.cache/
 
 # Logs
 *.log

@@ -11,6 +11,7 @@ export default tseslint.config(
       "**/coverage/**",
       ".history/**",
       "**/*.config.{js,mjs,cjs,ts}",
+      "**/playwright/.cache/**",
     ],
   },
   js.configs.recommended,
