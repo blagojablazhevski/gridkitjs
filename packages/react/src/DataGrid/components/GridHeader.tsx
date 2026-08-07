@@ -3,6 +3,7 @@ import { KEYBOARD_STEP } from "@gridkitjs/core";
 import type { ResolvedColumn } from "../DataGrid";
 import type { ColumnDragApi } from "../useColumnDrag";
 import type { ColumnResizeApi } from "../useColumnResize";
+import type { ColumnSortApi } from "../useColumnSort";
 import { HEADER_ROW, type GridNavigationApi } from "../useGridNavigation";
 import { intentOf, type GridSelectionApi } from "../useGridSelection";
 
@@ -10,14 +11,56 @@ interface GridHeaderProps<Row> {
   columns: readonly ResolvedColumn<Row>[];
   resize: ColumnResizeApi<Row>;
   drag: ColumnDragApi<Row>;
+  sort: ColumnSortApi<Row>;
+  sortableColumns: boolean;
   nav: GridNavigationApi;
   selection: GridSelectionApi;
+}
+
+/**
+ * The two glyphs a sort toggle shows: a neutral hint before a column has a
+ * direction, and a single chevron reused for both directions once it does —
+ * `theme-tailwind` rotates it 180° for `desc` rather than swapping icons.
+ */
+function ChevronsUpDownIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="m7 15 5 5 5-5" />
+      <path d="m7 9 5-5 5 5" />
+    </svg>
+  );
+}
+
+function ChevronUpIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="m18 15-6-6-6 6" />
+    </svg>
+  );
 }
 
 export default function GridHeader<Row>({
   columns,
   resize,
   drag,
+  sort,
+  sortableColumns,
   nav,
   selection,
 }: GridHeaderProps<Row>) {
@@ -41,6 +84,9 @@ export default function GridHeader<Row>({
           const dropBefore = beforeId !== undefined && beforeId === entry.id;
           const dropAfter = beforeId === null && index === columns.length - 1;
           const selected = selection.selectedColumnIds.has(entry.id);
+          const sortable = column.sortable ?? sortableColumns;
+          const sortDirection = sort.directionFor(entry.id);
+          const sortPriority = sort.priorityFor(entry.id);
 
           /**
            * Announced so the keys are discoverable, since neither is a
@@ -49,6 +95,7 @@ export default function GridHeader<Row>({
           const shortcuts = [
             entry.reorderable ? "Control+ArrowLeft Control+ArrowRight" : "",
             entry.resizable ? "Alt+ArrowLeft Alt+ArrowRight" : "",
+            sortable ? "Alt+ArrowUp" : "",
           ]
             .filter(Boolean)
             .join(" ");
@@ -79,7 +126,8 @@ export default function GridHeader<Row>({
                 }
                 if (
                   event.target instanceof Element &&
-                  event.target.closest(".header-resize-handle") !== null
+                  (event.target.closest(".header-resize-handle") !== null ||
+                    event.target.closest(".header-sort-toggle") !== null)
                 ) {
                   return;
                 }
@@ -98,6 +146,11 @@ export default function GridHeader<Row>({
                 if (horizontal && event.altKey && entry.resizable) {
                   event.preventDefault();
                   resize.nudge(entry, direction * KEYBOARD_STEP);
+                  return;
+                }
+                if (event.key === "ArrowUp" && event.altKey && sortable) {
+                  event.preventDefault();
+                  sort.toggle(entry, { shiftKey: event.shiftKey });
                   return;
                 }
                 // Space builds a selection up and Enter replaces it, as in the
@@ -130,6 +183,11 @@ export default function GridHeader<Row>({
                 .filter(Boolean)
                 .join(" ")}
               {...(shortcuts !== "" && { "aria-keyshortcuts": shortcuts })}
+              {...(sortable &&
+                sortDirection !== null && {
+                  "aria-sort":
+                    sortDirection === "asc" ? "ascending" : "descending",
+                })}
               {...(entry.reorderable && {
                 onPointerDown: (event) => {
                   drag.startDrag(entry, event);
@@ -137,6 +195,46 @@ export default function GridHeader<Row>({
               })}
             >
               {entry.label}
+              {sortable && (
+                /*
+                 * A pointer affordance only, and hidden from assistive
+                 * technology like the resize handle: the keyboard equivalent
+                 * lives on the header itself, under Alt+ArrowUp (plain) /
+                 * Alt+Shift+ArrowUp (stacking).
+                 */
+                <span
+                  className={[
+                    "header-sort-toggle",
+                    sortDirection !== null ? `is-sorted-${sortDirection}` : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  aria-hidden="true"
+                  tabIndex={-1}
+                  onPointerDown={(event) => {
+                    /*
+                     * Otherwise a reorderable header's own `onPointerDown`
+                     * sees this bubble up and starts a column drag, whose
+                     * `setPointerCapture` then redirects the click that
+                     * follows to the `th` — the same reason `startResize`
+                     * stops it for the resize handle.
+                     */
+                    event.stopPropagation();
+                  }}
+                  onClick={(event) => {
+                    sort.toggle(entry, { shiftKey: event.shiftKey });
+                  }}
+                >
+                  {sortDirection === null ? (
+                    <ChevronsUpDownIcon />
+                  ) : (
+                    <ChevronUpIcon />
+                  )}
+                  {sortPriority !== null && sortPriority > 1 && (
+                    <span className="header-sort-priority">{sortPriority}</span>
+                  )}
+                </span>
+              )}
               {entry.resizable && (
                 /*
                  * A pointer affordance only, and hidden from assistive

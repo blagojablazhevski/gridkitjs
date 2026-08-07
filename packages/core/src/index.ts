@@ -18,10 +18,18 @@ export type {
   ColumnSelectionChangeEvent,
   ColumnSizeDefaults,
   ColumnSizingState,
+  ColumnSortEntry,
+  ColumnSortEvent,
+  ColumnSortState,
   ColumnsSelectEvent,
   ColumnType,
   ColumnWrapConfig,
   DropSide,
+  FilterEntry,
+  FilterPredicate,
+  FilterState,
+  GroupFilterEntry,
+  PredicateFilterEntry,
   ResolvedColumn,
   ResolvedRow,
   RowSelectEvent,
@@ -34,6 +42,9 @@ export type {
   SelectionDiff,
   SelectionMode,
   SelectionState,
+  SortDirection,
+  TextFilterEntry,
+  ValueFilterEntry,
 } from "./types";
 export {
   accessDotted,
@@ -72,3 +83,18 @@ export {
   sizeColumnToContent,
   totalColumnWidth,
 } from "./util/sizing";
+export {
+  compareValues,
+  sortDirectionFor,
+  sortPriorityFor,
+  sortRows,
+  toggleColumnSort,
+} from "./util/sorting";
+export {
+  clearAllFilters,
+  filterQueryFor,
+  filterRows,
+  matchesQuery,
+  setColumnFilter,
+} from "./util/filtering";
+export { resolveShownRows } from "./util/rows";

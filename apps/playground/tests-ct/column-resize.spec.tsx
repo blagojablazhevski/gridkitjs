@@ -139,15 +139,6 @@ test("cancelling one column's drag with Escape does not clobber another column r
   mount,
   page,
 }) => {
-  /**
-   * Known bug, tracked rather than fixed here: `useColumnResize.ts` captures
-   * `base = sizing` once at drag-start and `Escape`'s `setSizing(base)`
-   * restores that stale snapshot outright, discarding any *other* column's
-   * width changed via keyboard while the drag was still open. Confirmed by
-   * this test: column 1's width reverts to its pre-nudge value instead of
-   * surviving column 0's cancellation. Remove `test.fail()` once fixed.
-   */
-  test.fail();
   const root = await mountGrid(
     mount,
     <DataGridComponent
@@ -238,16 +229,6 @@ test("double-click sizes an under-wide column up to its content, not only down",
 });
 
 test("double-click on a column with no rows is a no-op", async ({ mount }) => {
-  /**
-   * Known bug, tracked rather than fixed here: `measureColumnContent.ts`'s
-   * `[data-gridkit-column="..."]` selector isn't scoped to body `<td>`
-   * cells — the header `<th>` carries the same attribute — so with zero
-   * rows it measures the header label instead of finding no cells and
-   * returning `null`. Confirmed by this test: the column resizes to fit its
-   * header text rather than staying untouched. Remove `test.fail()` once
-   * the selector is scoped to `td[data-gridkit-column]`.
-   */
-  test.fail();
   const events: ColumnResizeEvent[] = [];
   const root = await mountGrid(
     mount,
