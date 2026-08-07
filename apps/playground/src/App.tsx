@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { defineColumnsFromRows } from "@gridkitjs/core";
+import { defineColumnsFromRows, type FilterState } from "@gridkitjs/core";
 import {
   DataGridComponent,
   type ColumnDefinition,
@@ -179,6 +179,27 @@ const modes: readonly { value: ResizeMode; description: string }[] = [
   { value: "fixed", description: "columns keep their own width" },
 ];
 
+/**
+ * The same dataset as the grid above, `defaultFilter`-seeded rather than
+ * driven by a header/toolbar — there's no built-in filter UI yet, so this
+ * is what "seed a grid already filtered" looks like today. ANDs a text
+ * query against a `GroupFilterEntry` that ORs a second text query with a
+ * predicate, to show three of the four entry kinds working together.
+ */
+const costFilter: FilterState<Row> = [
+  { columnId: "Application.Name", query: "%a%" },
+  {
+    combinator: "or",
+    entries: [
+      { columnId: "Status", query: "warn" },
+      {
+        columnId: "Cost",
+        predicate: (value) => typeof value === "number" && value > 1000,
+      },
+    ],
+  },
+];
+
 export default function App() {
   const [resizeMode, setResizeMode] = useState<ResizeMode>("fit");
   /** The last thing each selection callback reported, newest first. */
@@ -268,6 +289,36 @@ export default function App() {
                     .join(", ");
             record(`onColumnSortChange — ${summary}`);
           }}
+        />
+      </div>
+      <h2 className="mt-8 text-lg font-bold">
+        Same data, <code>defaultFilter</code>-seeded
+      </h2>
+      <p className="mt-2 text-sm text-gray-600">
+        No header or toolbar filter UI yet — this is what seeding a grid already
+        filtered looks like today. Application name contains <code>a</code>, and
+        either Status is exactly <code>warn</code> or Cost is over 1000:
+      </p>
+      <pre className="mt-2 overflow-x-auto rounded border border-gray-300 bg-gray-50 p-2 text-xs">
+        {`[
+  { columnId: "Application.Name", query: "%a%" },
+  {
+    combinator: "or",
+    entries: [
+      { columnId: "Status", query: "warn" },
+      { columnId: "Cost", predicate: (value) => value > 1000 },
+    ],
+  },
+]`}
+      </pre>
+      <div className="mt-2">
+        <DataGridComponent
+          columns={columns}
+          dataSource={rows}
+          getRowId={(row) => String(row.Id)}
+          label="Application costs, filtered"
+          borders="all"
+          defaultFilter={costFilter}
         />
       </div>
       <h2 className="mt-8 text-lg font-bold">Selection & sort callbacks</h2>

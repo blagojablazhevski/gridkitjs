@@ -5,6 +5,7 @@
     "column-resizing",
     "column-reordering",
     "column-sorting",
+    "column-filtering",
     "column-selection"
   ]
 }

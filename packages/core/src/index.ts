@@ -25,6 +25,11 @@ export type {
   ColumnType,
   ColumnWrapConfig,
   DropSide,
+  FilterEntry,
+  FilterPredicate,
+  FilterState,
+  GroupFilterEntry,
+  PredicateFilterEntry,
   ResolvedColumn,
   ResolvedRow,
   RowSelectEvent,
@@ -38,6 +43,8 @@ export type {
   SelectionMode,
   SelectionState,
   SortDirection,
+  TextFilterEntry,
+  ValueFilterEntry,
 } from "./types";
 export {
   accessDotted,
@@ -83,3 +90,11 @@ export {
   sortRows,
   toggleColumnSort,
 } from "./util/sorting";
+export {
+  clearAllFilters,
+  filterQueryFor,
+  filterRows,
+  matchesQuery,
+  setColumnFilter,
+} from "./util/filtering";
+export { resolveShownRows } from "./util/rows";

@@ -285,6 +285,73 @@ export interface ColumnSortEvent {
   readonly sort: ColumnSortState;
 }
 
+interface FilterEntryBase<Row> {
+  readonly columnId?: FieldPath<Row> | (string & {});
+}
+
+/** Matches a column's stringified value against an SQL LIKE-style query. */
+export interface TextFilterEntry<Row> extends FilterEntryBase<Row> {
+  /**
+   * A bare query is an exact match; `%text%` is contains; `text%` is
+   * starts-with; `%text` is ends-with. Always case-insensitive. Only the
+   * first and last characters are read as anchors — a `%` anywhere else is
+   * a literal character, not a wildcard.
+   */
+  readonly query: string;
+}
+
+/**
+ * Matches a column's actual (non-stringified) value by strict equality —
+ * only when the column's resolved `type` agrees: `number`/`decimal`/
+ * `currency`/`percent` for a `number` value, `boolean` for a `boolean`
+ * value, `date`/`dateTime`/`time` for a `Date` value (compared via
+ * `getTime()`). A `value` against a column of the wrong type never matches,
+ * rather than silently stringifying and falling through to a text
+ * comparison — the whole point of this variant existing separately from
+ * `TextFilterEntry` is that it doesn't do that.
+ */
+export interface ValueFilterEntry<Row> extends FilterEntryBase<Row> {
+  readonly value: number | boolean | Date;
+}
+
+export type FilterPredicate<Row> = (value: unknown, row: Row) => boolean;
+
+/**
+ * Matches via caller-supplied logic — a numeric range, a cross-field
+ * combination, anything `query`/`value` can't express. Called once per row,
+ * not per column: when `columnId` is given, `value` is that column's value,
+ * resolved for convenience; when it's omitted, `value` is `undefined` and
+ * the predicate is expected to read whatever it needs off `row` itself.
+ */
+export interface PredicateFilterEntry<Row> extends FilterEntryBase<Row> {
+  readonly predicate: FilterPredicate<Row>;
+}
+
+/**
+ * A nested group of entries, combined with `combinator` instead of the
+ * implicit AND every top-level `FilterState` uses. `entries` is itself a
+ * `FilterState<Row>`, so groups nest to any depth — the only entry variant
+ * with no `columnId` of its own, since it isn't scoped to one column, only
+ * to the entries it composes.
+ */
+export interface GroupFilterEntry<Row> {
+  readonly combinator: "and" | "or";
+  readonly entries: FilterState<Row>;
+}
+
+export type FilterEntry<Row> =
+  | TextFilterEntry<Row>
+  | ValueFilterEntry<Row>
+  | PredicateFilterEntry<Row>
+  | GroupFilterEntry<Row>;
+
+/**
+ * The active filter, every entry ANDed together at the top level — nest a
+ * `GroupFilterEntry` for anything that needs OR. Empty for an unfiltered
+ * grid, mirroring `ColumnSortState`'s empty array for "no sort".
+ */
+export type FilterState<Row> = readonly FilterEntry<Row>[];
+
 /**
  * Ids selected, in the order they were selected — so the most recent is last,
  * and a consumer wanting only that reads `at(-1)` rather than tracking it

@@ -6,7 +6,7 @@ import {
   moveColumnBefore,
   resolveColumnWidths,
   resolveRowId,
-  sortRows,
+  resolveShownRows,
   totalColumnWidth,
   type ColumnDefinition as CoreColumnDefinition,
   type ResolvedColumn as CoreResolvedColumn,
@@ -17,6 +17,7 @@ import {
   type ColumnSizingState,
   type ColumnSortEvent,
   type ColumnSortState,
+  type FilterState,
   type ResolvedRow,
   type CellSelectionState,
   type SelectableConfig,
@@ -171,6 +172,8 @@ export interface DataGridProps<Row> extends SelectionCallbacks<Row> {
    * clear back to "none".
    */
   onColumnSortChange?: ((event: ColumnSortEvent) => void) | undefined;
+  /** The filter to start with — every applied entry, ANDed together. Uncontrolled. */
+  defaultFilter?: FilterState<Row> | undefined;
   /**
    * The grid's accessible name, announced when it takes focus. A grid without
    * one is read only as "grid", which says nothing about which grid.
@@ -204,6 +207,7 @@ export function DataGridComponent<Row>({
   sortableColumns = false,
   defaultColumnSort,
   onColumnSortChange,
+  defaultFilter,
   label,
   labelledBy,
   ...callbacks
@@ -222,6 +226,7 @@ export function DataGridComponent<Row>({
     defaultColumnOrder ?? [],
   );
   const [sort, setSort] = useState<ColumnSortState>(defaultColumnSort ?? []);
+  const [filter] = useState<FilterState<Row>>(defaultFilter ?? []);
   const [announcement, setAnnouncement] = useState("");
   const [rowSelection, setRowSelection] = useState<SelectionState>(
     defaultRowSelection ?? [],
@@ -294,15 +299,15 @@ export function DataGridComponent<Row>({
   ]);
 
   /**
-   * `rows`, reordered by `sort` — needs `resolved` for each column's `field`
-   * and `type`, so it runs after sizing rather than alongside `rows` itself.
-   * Everything downstream that renders or interacts with row order reads
-   * this rather than `rows`, so a sort is what the user actually sees and
-   * clicks.
+   * `rows`, filtered then sorted — needs `resolved` for each column's
+   * `field` and `type`, so it runs after sizing rather than alongside
+   * `rows` itself. Everything downstream that renders or interacts with row
+   * order and membership reads this rather than `rows`, so what the user
+   * sees, filters, sorts, and clicks all agree.
    */
-  const sortedRows = useMemo(
-    () => sortRows(rows, sort, resolved),
-    [rows, sort, resolved],
+  const shownRows = useMemo(
+    () => resolveShownRows(rows, filter, sort, resolved),
+    [rows, filter, sort, resolved],
   );
 
   /**
@@ -351,7 +356,7 @@ export function DataGridComponent<Row>({
 
   const nav = useGridNavigation({
     tableRef,
-    rowCount: sortedRows.length,
+    rowCount: shownRows.length,
     columnCount: resolved.length,
   });
 
@@ -422,7 +427,7 @@ export function DataGridComponent<Row>({
   });
 
   const selection = useGridSelection<Row>({
-    rows: sortedRows,
+    rows: shownRows,
     columns: resolved,
     selectable,
     rowSelection,
@@ -450,7 +455,7 @@ export function DataGridComponent<Row>({
          */
         role="grid"
         // The header is a row too, and counted from one.
-        aria-rowcount={sortedRows.length + 1}
+        aria-rowcount={shownRows.length + 1}
         aria-colcount={resolved.length}
         {...(multiselectable && { "aria-multiselectable": true })}
         {...(labelledBy !== undefined && { "aria-labelledby": labelledBy })}
@@ -516,7 +521,7 @@ export function DataGridComponent<Row>({
         />
         <GridBody<Row>
           columns={resolved}
-          rows={sortedRows}
+          rows={shownRows}
           activeColumnId={resize.activeColumnId}
           nav={nav}
           selection={selection}
