@@ -1,5 +1,25 @@
 # @gridkitjs/core
 
+## 0.6.0
+
+### Minor Changes
+
+- 26adc6f: Added filtering infrastructure: `FilterState`/`FilterEntry` — a discriminated
+  union of a `%`-wildcard text query, a typed exact-value match (type-scoped:
+  a number never matches a string column), a custom predicate, or a nested
+  `GroupFilterEntry` for AND/OR composition — ANDed together across top-level
+  entries. Added the core `filterRows` / `setColumnFilter` / `clearAllFilters`
+  / `filterQueryFor` / `matchesQuery` functions, and `resolveShownRows`, which
+  composes filtering and sorting. Seed a grid's filter with `defaultFilter` on
+  `DataGridComponent`. No header or toolbar UI ships yet — pre-filter
+  `dataSource` yourself with the exported functions, or seed `defaultFilter`,
+  until it does.
+- 26adc6f: Added multi-column stacked sorting. A header's sort toggle cycles a column
+  through ascending, descending, and off; Shift-click adds or updates a column
+  in the stack instead of replacing it, sorted in priority order. Configure
+  with `sortableColumns` / `column.sortable`, seed with `defaultColumnSort`,
+  and listen with `onColumnSortChange`.
+
 ## 0.5.0
 
 ### Minor Changes

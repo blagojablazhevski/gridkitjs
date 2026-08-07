@@ -1,5 +1,41 @@
 # @gridkitjs/react
 
+## 0.5.0
+
+### Minor Changes
+
+- 26adc6f: Added filtering infrastructure: `FilterState`/`FilterEntry` — a discriminated
+  union of a `%`-wildcard text query, a typed exact-value match (type-scoped:
+  a number never matches a string column), a custom predicate, or a nested
+  `GroupFilterEntry` for AND/OR composition — ANDed together across top-level
+  entries. Added the core `filterRows` / `setColumnFilter` / `clearAllFilters`
+  / `filterQueryFor` / `matchesQuery` functions, and `resolveShownRows`, which
+  composes filtering and sorting. Seed a grid's filter with `defaultFilter` on
+  `DataGridComponent`. No header or toolbar UI ships yet — pre-filter
+  `dataSource` yourself with the exported functions, or seed `defaultFilter`,
+  until it does.
+- 26adc6f: Added multi-column stacked sorting. A header's sort toggle cycles a column
+  through ascending, descending, and off; Shift-click adds or updates a column
+  in the stack instead of replacing it, sorted in priority order. Configure
+  with `sortableColumns` / `column.sortable`, seed with `defaultColumnSort`,
+  and listen with `onColumnSortChange`.
+
+### Patch Changes
+
+- 26adc6f: Fixed a bug where cancelling a column drag with `Escape` could discard another
+  column's width if that column was resized via keyboard while the drag was
+  still in progress. The cancelled column now reverts on its own, leaving
+  concurrent changes to other columns intact.
+- 26adc6f: Fixed a spurious `onColumnResize` "end" event firing when a resize handle's
+  pointer is released with no intervening move — including each of the two
+  clicks that make up a double-click.
+- 26adc6f: Fixed `sizeToContent` (double-click a resize handle) measuring the header's
+  own label as if it were a data cell when the grid has no rows, instead of
+  correctly doing nothing.
+- Updated dependencies [26adc6f]
+- Updated dependencies [26adc6f]
+  - @gridkitjs/core@0.6.0
+
 ## 0.4.0
 
 ### Minor Changes

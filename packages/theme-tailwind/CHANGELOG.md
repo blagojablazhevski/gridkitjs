@@ -1,5 +1,15 @@
 # @gridkitjs/theme-tailwind
 
+## 0.3.1
+
+### Patch Changes
+
+- 26adc6f: Added multi-column stacked sorting. A header's sort toggle cycles a column
+  through ascending, descending, and off; Shift-click adds or updates a column
+  in the stack instead of replacing it, sorted in priority order. Configure
+  with `sortableColumns` / `column.sortable`, seed with `defaultColumnSort`,
+  and listen with `onColumnSortChange`.
+
 ## 0.3.0
 
 ### Minor Changes
