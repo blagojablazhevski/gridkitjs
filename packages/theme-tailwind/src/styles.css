@@ -277,6 +277,67 @@
     opacity: 0;
   }
 
+  /*
+   * Docked to the header's own right edge, absolutely — like the resize
+   * handle, and for the same reason: sitting in the label's normal flow, a
+   * long label under `text-overflow: ellipsis` pushes the toggle out past
+   * where `overflow: hidden` clips it, leaving it unclickable (a real click
+   * there lands on the header cell instead and selects the column). Docked
+   * to a fixed offset, it stays inside the clipped area — and clear of the
+   * resize handle's own 6px strip at `right: 0`, so a resizable, sortable
+   * column keeps two independent hit targets rather than one shadowing the
+   * other.
+   */
+  .gridkit-data-grid .header-sort-toggle {
+    display: inline-flex;
+    position: absolute;
+    top: 50%;
+    right: 0.75rem;
+    transform: translateY(-50%);
+    align-items: center;
+    gap: 0.125rem;
+    cursor: pointer;
+    color: var(--gridkit-fg-muted);
+  }
+
+  .gridkit-data-grid .header-sort-toggle svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+
+  /*
+   * Hidden until the column has a direction or the header is hovered or
+   * focused — an unsorted, un-hovered header stays quiet, the same restraint
+   * `.header-resize-grip` uses.
+   */
+  .gridkit-data-grid
+    .header-sort-toggle:not(.is-sorted-asc):not(.is-sorted-desc) {
+    opacity: 0;
+  }
+
+  .gridkit-data-grid .grid-header .header-cell:hover .header-sort-toggle,
+  .gridkit-data-grid .header-cell:focus-visible .header-sort-toggle {
+    opacity: 1;
+  }
+
+  .gridkit-data-grid .header-sort-toggle.is-sorted-asc,
+  .gridkit-data-grid .header-sort-toggle.is-sorted-desc {
+    opacity: 1;
+    color: var(--gridkit-accent);
+  }
+
+  /* One chevron covers both directions; `desc` is `asc` turned upside down. */
+  .gridkit-data-grid .header-sort-toggle.is-sorted-desc svg {
+    transform: rotate(180deg);
+  }
+
+  .gridkit-data-grid .header-sort-priority {
+    font-size: 0.625rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
   .gridkit-data-grid:not(.no-hover-columns) .grid-header .header-cell:hover {
     background-color: var(--gridkit-surface-muted);
   }
