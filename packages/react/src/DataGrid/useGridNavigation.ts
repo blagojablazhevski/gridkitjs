@@ -5,22 +5,17 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type RefObject,
 } from "react";
+import {
+  clampFocus,
+  nextFocusForKey,
+  HEADER_ROW,
+  type GridFocus,
+} from "@gridkitjs/core";
 
-/**
- * The header's row index. One coordinate space covers the header and the body
- * so that arrowing up out of the first row reaches the header without a case
- * of its own, and every other move is plain arithmetic.
- */
-export const HEADER_ROW = -1;
+export { HEADER_ROW, type GridFocus };
 
 /** Rows a page key moves when the viewport cannot be measured. */
 const FALLBACK_PAGE = 10;
-
-/** The cell the grid's single tab stop sits on. */
-export interface GridFocus {
-  readonly rowIndex: number;
-  readonly columnIndex: number;
-}
 
 interface UseGridNavigationOptions {
   tableRef: RefObject<HTMLTableElement | null>;
@@ -39,25 +34,6 @@ export interface GridNavigationApi {
   focusCell: (rowIndex: number, columnIndex: number) => void;
   /** Handles the navigation keys, leaving every other key to bubble. */
   onKeyDown: (event: ReactKeyboardEvent<HTMLElement>) => void;
-}
-
-/**
- * Holds a coordinate inside the grid, so that a focus surviving a column
- * removal or a shorter page never leaves the grid with no tab stop at all —
- * which is a grid a keyboard cannot reach.
- */
-function clampFocus(
-  focus: GridFocus,
-  rowCount: number,
-  columnCount: number,
-): GridFocus {
-  return {
-    rowIndex: Math.min(Math.max(focus.rowIndex, HEADER_ROW), rowCount - 1),
-    columnIndex: Math.min(
-      Math.max(focus.columnIndex, 0),
-      Math.max(columnCount - 1, 0),
-    ),
-  };
 }
 
 /**
@@ -171,50 +147,21 @@ export default function useGridNavigation({
   }
 
   function onKeyDown(event: ReactKeyboardEvent<HTMLElement>): void {
-    // Alt on an arrow resizes and Ctrl on one reorders; the header claims both
-    // before this runs, and elsewhere they belong to the browser.
-    if (event.altKey) {
+    const next = nextFocusForKey(
+      event.key,
+      {
+        ctrlKey: event.ctrlKey,
+        metaKey: event.metaKey,
+        altKey: event.altKey,
+        shiftKey: event.shiftKey,
+      },
+      focus,
+      rowCount,
+      columnCount,
+      pageSize(),
+    );
+    if (next === null) {
       return;
-    }
-
-    const { rowIndex, columnIndex } = focus;
-    let next: GridFocus;
-
-    switch (event.key) {
-      case "ArrowLeft":
-        if (event.ctrlKey) return;
-        next = { rowIndex, columnIndex: columnIndex - 1 };
-        break;
-      case "ArrowRight":
-        if (event.ctrlKey) return;
-        next = { rowIndex, columnIndex: columnIndex + 1 };
-        break;
-      case "ArrowUp":
-        next = { rowIndex: rowIndex - 1, columnIndex };
-        break;
-      case "ArrowDown":
-        next = { rowIndex: rowIndex + 1, columnIndex };
-        break;
-      // Ctrl takes Home and End to the grid's ends rather than the row's, which
-      // is the one place Ctrl is navigation rather than reorder.
-      case "Home":
-        next = event.ctrlKey
-          ? { rowIndex: HEADER_ROW, columnIndex: 0 }
-          : { rowIndex, columnIndex: 0 };
-        break;
-      case "End":
-        next = event.ctrlKey
-          ? { rowIndex: rowCount - 1, columnIndex: columnCount - 1 }
-          : { rowIndex, columnIndex: columnCount - 1 };
-        break;
-      case "PageUp":
-        next = { rowIndex: rowIndex - pageSize(), columnIndex };
-        break;
-      case "PageDown":
-        next = { rowIndex: rowIndex + pageSize(), columnIndex };
-        break;
-      default:
-        return;
     }
 
     // Taken even when the move lands nowhere: an arrow at the last row would

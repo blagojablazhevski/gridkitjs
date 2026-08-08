@@ -39,6 +39,7 @@ export type {
   SelectedCell,
   SelectedCellRef,
   SelectedColumn,
+  SelectIntent,
   SelectionDiff,
   SelectionMode,
   SelectionState,
@@ -46,23 +47,30 @@ export type {
   TextFilterEntry,
   ValueFilterEntry,
 } from "./types";
+export type { KeyShortcutCapabilities } from "./util/grid";
 export {
   accessDotted,
   alignmentForType,
+  buildKeyShortcuts,
   defineColumnsFromRows,
   getColumnId,
   resolveColumnLabel,
   resolveRowId,
 } from "./util/grid";
+export type { GridFocus, NavigationModifiers } from "./util/navigation";
+export { clampFocus, HEADER_ROW, nextFocusForKey } from "./util/navigation";
 export {
   applyColumnOrder,
   moveColumnBefore,
   movesColumn,
   resolveDropBefore,
+  resolveKeyboardDropTarget,
 } from "./util/ordering";
 export {
+  applySelectionIntent,
   clearSelection,
   diffSelection,
+  intentOf,
   isSameCell,
   selectAll,
   selectCell,
@@ -80,6 +88,7 @@ export {
   fitColumnsToWidth,
   resolveColumnConstraints,
   resolveColumnWidths,
+  revertColumnSize,
   sizeColumnToContent,
   totalColumnWidth,
 } from "./util/sizing";
@@ -97,4 +106,9 @@ export {
   matchesQuery,
   setColumnFilter,
 } from "./util/filtering";
-export { resolveShownRows } from "./util/rows";
+export {
+  resolveCell,
+  resolveColumns,
+  resolveRows,
+  resolveShownRows,
+} from "./util/rows";

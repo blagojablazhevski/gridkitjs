@@ -93,3 +93,34 @@ export function resolveDropBefore(
   const index = orderedIds.indexOf(targetId);
   return index === -1 ? null : (orderedIds[index + 1] ?? null);
 }
+
+/**
+ * The `beforeId` a keyboard nudge on `columnId` produces, for `onDrop` to
+ * apply the same way a pointer drop does — or `undefined` when the nudge is a
+ * no-op: `columnId` is not in `orderedIds`, or the nudge would move it left
+ * of the start.
+ *
+ * `null` is a real answer here, not "no-op": it means append to the end, the
+ * same convention `moveColumnBefore` uses.
+ */
+export function resolveKeyboardDropTarget(
+  orderedIds: ColumnOrderState,
+  columnId: string,
+  direction: -1 | 1,
+): string | null | undefined {
+  const index = orderedIds.indexOf(columnId);
+  if (index === -1) {
+    return undefined;
+  }
+
+  /**
+   * Moving right lands in front of the id two along: the gap immediately
+   * after a column is the one it already sits in.
+   */
+  const targetIndex = direction === -1 ? index - 1 : index + 2;
+  if (targetIndex < 0) {
+    return undefined;
+  }
+
+  return orderedIds[targetIndex] ?? null;
+}

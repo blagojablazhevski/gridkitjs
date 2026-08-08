@@ -2,6 +2,7 @@ import type {
   CellSelectionMode,
   CellSelectionState,
   SelectedCellRef,
+  SelectIntent,
   SelectionDiff,
   SelectionMode,
   SelectionState,
@@ -176,4 +177,42 @@ export function toggleCellSelection(
     return selection;
   }
   return isSameCell(selection, cell) ? null : cell;
+}
+
+/** The intent a click or key press carries, by the modifiers held with it. */
+export function intentOf(event: {
+  ctrlKey: boolean;
+  metaKey: boolean;
+  shiftKey: boolean;
+}): SelectIntent {
+  if (event.shiftKey) {
+    return "range";
+  }
+  // Cmd on a Mac is Ctrl everywhere else, and both mean the same thing here.
+  return event.ctrlKey || event.metaKey ? "toggle" : "replace";
+}
+
+/**
+ * The transform an intent asks for. A function rather than a branch inside
+ * each caller, so a row and a column cannot come to mean different things by
+ * the same click.
+ */
+export function applySelectionIntent(
+  selection: SelectionState,
+  orderedIds: readonly string[],
+  anchorId: string | null,
+  id: string,
+  intent: SelectIntent,
+  mode: SelectionMode,
+): SelectionState {
+  switch (intent) {
+    case "toggle":
+      return toggleSelection(selection, id, mode);
+    // A range with no anchor yet spans from the id to itself, which is the
+    // plain click a first Shift-click may as well be.
+    case "range":
+      return selectRange(selection, orderedIds, anchorId ?? id, id, mode);
+    default:
+      return selectOnly(selection, id, mode);
+  }
 }

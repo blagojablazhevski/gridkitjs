@@ -389,6 +389,12 @@ export interface SelectableConfig {
   cells?: CellSelectionMode | undefined;
 }
 
+/**
+ * What an interaction means for the selection, read off its modifiers once at
+ * the boundary so that nothing downstream handles a raw event.
+ */
+export type SelectIntent = "replace" | "toggle" | "range";
+
 /** The address of one cell: which row, and which column within it. */
 export interface SelectedCellRef {
   readonly rowId: string;

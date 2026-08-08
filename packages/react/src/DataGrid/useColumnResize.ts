@@ -10,6 +10,7 @@ import {
   beginColumnResize,
   clampColumnWidth,
   resolveColumnConstraints,
+  revertColumnSize,
   sizeColumnToContent,
   type ColumnResizeEvent,
   type ColumnSizeDefaults,
@@ -113,22 +114,12 @@ export default function useColumnResize<Row>({
        * into whatever the sizing state is *now* — not the `base` snapshot
        * taken at drag-start — so a different column resized via keyboard
        * while this drag was still open keeps its change instead of being
-       * clobbered by a stale restore. A column that had no stored width at
-       * all is correctly omitted by deleting the key rather than merging
-       * `startWidth` back in, which would otherwise leave it pinned and
-       * hidden from auto-fit.
+       * clobbered by a stale restore.
        */
       onCancel() {
         setActiveColumnId(null);
         setSizing((current) => {
-          const next = Object.fromEntries(
-            Object.entries(current).filter(
-              ([columnId]) => columnId !== session.columnId,
-            ),
-          );
-          if (session.columnId in base) {
-            next[session.columnId] = base[session.columnId] as number;
-          }
+          const next = revertColumnSize(current, base, session.columnId);
           onColumnResize?.({
             columnId: session.columnId,
             width: session.startWidth,

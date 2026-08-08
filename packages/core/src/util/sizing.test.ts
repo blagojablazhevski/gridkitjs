@@ -9,6 +9,7 @@ import {
   fitColumnsToWidth,
   resolveColumnConstraints,
   resolveColumnWidths,
+  revertColumnSize,
   sizeColumnToContent,
   totalColumnWidth,
 } from "./sizing";
@@ -370,5 +371,23 @@ describe("sizeColumnToContent", () => {
   test("stays within the column's bounds", () => {
     expect(sizeColumnToContent(10, constraints)).toBe(60);
     expect(sizeColumnToContent(900, constraints)).toBe(300);
+  });
+});
+
+describe("revertColumnSize", () => {
+  test("restores the column's width from base", () => {
+    expect(revertColumnSize({ Id: 200 }, { Id: 100 }, "Id")).toEqual({
+      Id: 100,
+    });
+  });
+
+  test("omits the column rather than pinning it, when base had no width for it", () => {
+    expect(revertColumnSize({ Id: 200 }, {}, "Id")).toEqual({});
+  });
+
+  test("leaves every other column's width untouched", () => {
+    expect(revertColumnSize({ Id: 200, Name: 150 }, { Id: 100 }, "Id")).toEqual(
+      { Id: 100, Name: 150 },
+    );
   });
 });

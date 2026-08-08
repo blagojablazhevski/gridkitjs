@@ -6,20 +6,21 @@ import {
   type SetStateAction,
 } from "react";
 import {
-  accessDotted,
+  applySelectionIntent,
   clearSelection,
   diffSelection,
+  resolveCell,
+  resolveColumns,
+  resolveRows,
   selectAll,
   selectCell,
-  selectOnly,
-  selectRange,
   toggleCellSelection,
-  toggleSelection,
   type CellSelectionMode,
   type CellSelectionState,
   type ResolvedRow,
   type SelectableConfig,
   type SelectedCellRef,
+  type SelectIntent,
   type SelectionMode,
   type SelectionState,
   type RowSelectEvent,
@@ -33,29 +34,8 @@ import type {
   ColumnSelectionChangeEvent,
   ColumnsSelectEvent,
   ResolvedColumn,
-  SelectedCell,
-  SelectedColumn,
 } from "./DataGrid";
 import { commitIfChanged } from "./commitIfChanged";
-
-/**
- * What an interaction means for the selection, read off its modifiers once at
- * the boundary so that nothing downstream handles a raw event.
- */
-export type SelectIntent = "replace" | "toggle" | "range";
-
-/** The intent a click or key press carries, by the modifiers held with it. */
-export function intentOf(event: {
-  ctrlKey: boolean;
-  metaKey: boolean;
-  shiftKey: boolean;
-}): SelectIntent {
-  if (event.shiftKey) {
-    return "range";
-  }
-  // Cmd on a Mac is Ctrl everywhere else, and both mean the same thing here.
-  return event.ctrlKey || event.metaKey ? "toggle" : "replace";
-}
 
 /**
  * The modifiers a Space or Enter keydown carries, for a caller that means to
@@ -138,31 +118,6 @@ export interface GridSelectionApi {
   clear: () => void;
 }
 
-/**
- * The transform an intent asks for. A function rather than a branch inside
- * each caller, so a row and a column cannot come to mean different things by
- * the same click.
- */
-function applyIntent(
-  selection: SelectionState,
-  orderedIds: readonly string[],
-  anchorId: string | null,
-  id: string,
-  intent: SelectIntent,
-  mode: SelectionMode,
-): SelectionState {
-  switch (intent) {
-    case "toggle":
-      return toggleSelection(selection, id, mode);
-    // A range with no anchor yet spans from the id to itself, which is the
-    // plain click a first Shift-click may as well be.
-    case "range":
-      return selectRange(selection, orderedIds, anchorId ?? id, id, mode);
-    default:
-      return selectOnly(selection, id, mode);
-  }
-}
-
 function countMessage(count: number, noun: string): string {
   if (count === 0) {
     return `No ${noun}s selected`;
@@ -243,52 +198,6 @@ export default function useGridSelection<Row>({
   const columnAnchor = useRef<string | null>(null);
 
   /**
-   * Ids with no row behind them are dropped rather than reported: a selection
-   * outlives a change to the data, so that filtering a row out and back leaves
-   * it selected, and only what is on screen can be handed to a callback.
-   */
-  function resolveRows(ids: readonly string[]): readonly ResolvedRow<Row>[] {
-    return ids.map((id) => rowsById.get(id)).filter((row) => row !== undefined);
-  }
-
-  function resolveColumns(
-    ids: readonly string[],
-  ): readonly SelectedColumn<Row>[] {
-    return ids
-      .map((id) => {
-        const columnIndex = columns.findIndex((entry) => entry.id === id);
-        const column = columns[columnIndex];
-        return column === undefined
-          ? undefined
-          : { columnId: id, column, columnIndex };
-      })
-      .filter((column) => column !== undefined);
-  }
-
-  function resolveCell(ref: CellSelectionState): SelectedCell<Row> | null {
-    if (ref === null) {
-      return null;
-    }
-    const entry = rowsById.get(ref.rowId);
-    const columnIndex = columns.findIndex(
-      (candidate) => candidate.id === ref.columnId,
-    );
-    const column = columns[columnIndex];
-    if (entry === undefined || column === undefined) {
-      return null;
-    }
-    return {
-      rowId: ref.rowId,
-      columnId: ref.columnId,
-      row: entry.row,
-      column,
-      rowIndex: entry.rowIndex,
-      columnIndex,
-      value: accessDotted(entry.row, column.column.field),
-    };
-  }
-
-  /**
    * Announced only for a change touching more than one member. A single
    * selection is already carried by the focused row's own `aria-selected`, and
    * repeating it here would talk over that.
@@ -304,8 +213,8 @@ export default function useGridSelection<Row>({
     // selects what was already selected neither renders nor reports.
     commitIfChanged(rowSelection, next, setRowSelection, (committed) => {
       const { added, removed } = diffSelection(rowSelection, committed);
-      const addedRows = resolveRows(added);
-      const removedRows = resolveRows(removed);
+      const addedRows = resolveRows(rowsById, added);
+      const removedRows = resolveRows(rowsById, removed);
 
       for (const row of addedRows) {
         callbacks.onRowSelect?.({ row, selection: committed });
@@ -322,7 +231,7 @@ export default function useGridSelection<Row>({
       callbacks.onRowSelectionChange?.({
         added: addedRows,
         removed: removedRows,
-        selected: resolveRows(committed),
+        selected: resolveRows(rowsById, committed),
         selection: committed,
       });
       announceCount(added.length + removed.length, committed.length, "row");
@@ -332,8 +241,8 @@ export default function useGridSelection<Row>({
   function commitColumns(next: SelectionState): void {
     commitIfChanged(columnSelection, next, setColumnSelection, (committed) => {
       const { added, removed } = diffSelection(columnSelection, committed);
-      const addedColumns = resolveColumns(added);
-      const removedColumns = resolveColumns(removed);
+      const addedColumns = resolveColumns(columns, added);
+      const removedColumns = resolveColumns(columns, removed);
 
       for (const column of addedColumns) {
         callbacks.onColumnSelect?.({ column, selection: committed });
@@ -356,7 +265,7 @@ export default function useGridSelection<Row>({
       callbacks.onColumnSelectionChange?.({
         added: addedColumns,
         removed: removedColumns,
-        selected: resolveColumns(committed),
+        selected: resolveColumns(columns, committed),
         selection: committed,
       });
       announceCount(added.length + removed.length, committed.length, "column");
@@ -367,8 +276,8 @@ export default function useGridSelection<Row>({
     commitIfChanged(cellSelection, next, setCellSelection, (committed) => {
       // Resolved before and after in one place, so that moving between two
       // cells reports the leaving and the arriving as one change.
-      const selected = resolveCell(committed);
-      const deselected = resolveCell(cellSelection);
+      const selected = resolveCell(rowsById, columns, committed);
+      const deselected = resolveCell(rowsById, columns, cellSelection);
 
       if (deselected !== null) {
         callbacks.onCellDeselect?.({ cell: deselected, selection: committed });
@@ -385,7 +294,7 @@ export default function useGridSelection<Row>({
   }
 
   function selectRow(rowId: string, intent: SelectIntent): void {
-    const next = applyIntent(
+    const next = applySelectionIntent(
       rowSelection,
       rowIds,
       rowAnchor.current,
@@ -400,7 +309,7 @@ export default function useGridSelection<Row>({
   }
 
   function selectColumn(columnId: string, intent: SelectIntent): void {
-    const next = applyIntent(
+    const next = applySelectionIntent(
       columnSelection,
       columnIds,
       columnAnchor.current,
