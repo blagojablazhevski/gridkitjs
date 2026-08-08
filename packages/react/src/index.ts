@@ -7,6 +7,7 @@ export {
   type ColumnSelectEvent,
   type ColumnSelectionChangeEvent,
   type ColumnsSelectEvent,
+  type DataGridApi,
   type DataGridProps,
   type ResizeMode,
   type ResolvedColumn,
