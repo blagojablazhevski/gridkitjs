@@ -3,7 +3,7 @@ title: "Column selection"
 description: "Letting the user select whole columns with selectable.columns."
 ---
 
-selectable.columns takes false, "single", or "multiple" — off by default, since selection claims the click a display-only grid shouldn't. A column click replaces the selection, Ctrl-click toggles one column in or out, and Shift-click takes every column between the last click and this one.
+selectable.columns takes a SelectionMode — false, "single", or "multiple" — off by default, since selection claims the click a display-only grid shouldn't. A column click replaces the selection, Ctrl-click toggles one column in or out, and Shift-click takes every column between the last click and this one.
 
 ## Multi-select columns
 
@@ -29,3 +29,26 @@ selectable.columns takes false, "single", or "multiple" — off by default, sinc
 | `onColumnSelect / onColumnsSelect`     | `(event) => void`                             |         | Once per column newly selected, and once per interaction with every column it selected.                       |
 | `onColumnDeselect / onColumnsDeselect` | `(event) => void`                             |         | The deselecting counterpart of each, above.                                                                   |
 | `onColumnSelectionChange`              | `(event: ColumnSelectionChangeEvent) => void` |         | Once per change with what it added, what it removed, and everything selected after — the one to persist from. |
+
+## Payload shapes
+
+`onColumnSelect`/`onColumnDeselect` fire a `ColumnSelectEvent<Row>`, `onColumnsSelect`/`onColumnsDeselect` a `ColumnsSelectEvent<Row>`, and `onColumnSelectionChange` a `ColumnSelectionChangeEvent<Row>` — the one to persist from:
+
+| Type                              | Field       | Type                             | Description                                                    |
+| --------------------------------- | ----------- | -------------------------------- | -------------------------------------------------------------- |
+| `ColumnSelectEvent<Row>`          | `column`    | `SelectedColumn<Row>`            | The column selected or deselected.                             |
+|                                   | `selection` | `SelectionState`                 | Every selected column's id, at that point.                     |
+| `ColumnsSelectEvent<Row>`         | `columns`   | `readonly SelectedColumn<Row>[]` | Every column this interaction selected or deselected.          |
+|                                   | `selection` | `SelectionState`                 | Every selected column's id, at that point.                     |
+| `ColumnSelectionChangeEvent<Row>` | `added`     | `readonly SelectedColumn<Row>[]` | Columns this interaction newly selected.                       |
+|                                   | `removed`   | `readonly SelectedColumn<Row>[]` | Columns this interaction deselected.                           |
+|                                   | `selected`  | `readonly SelectedColumn<Row>[]` | Every selected column, not only what this interaction changed. |
+|                                   | `selection` | `SelectionState`                 | The same columns, as ids only.                                 |
+
+Each carries the column as a `SelectedColumn<Row>`:
+
+| Field         | Type                  | Description                                                                                           |
+| ------------- | --------------------- | ----------------------------------------------------------------------------------------------------- |
+| `columnId`    | `string`              | The column's id.                                                                                      |
+| `column`      | `ResolvedColumn<Row>` | The resolved column — see [imperative handle](/docs/react/imperative-handle#resolved-row-and-column). |
+| `columnIndex` | `number`              | Position among the columns as displayed, so after any reorder.                                        |

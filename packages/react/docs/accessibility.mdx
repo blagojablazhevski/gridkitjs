@@ -1,0 +1,60 @@
+---
+title: "Accessibility"
+description: "The keyboard navigation model, ARIA attributes, and live announcements built into DataGridComponent."
+---
+
+DataGridComponent implements the [WAI-ARIA grid pattern](https://www.w3.org/WAI/ARIA/apg/patterns/grid/): `role="grid"`, a single roving tab stop, and a live region for changes no visual cue alone would reach a screen reader with.
+
+## Keyboard navigation
+
+One cell holds the grid's tab stop at a time — Tab reaches the grid once, and the arrow keys move within it from there.
+
+| Key                                                                                      | Moves to                                          |
+| ---------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| <Kbd>ArrowUp</Kbd> / <Kbd>ArrowDown</Kbd> / <Kbd>ArrowLeft</Kbd> / <Kbd>ArrowRight</Kbd> | The adjacent cell in that direction.              |
+| <Kbd>Home</Kbd> / <Kbd>End</Kbd>                                                         | The first / last cell of the current row.         |
+| <Kbd>Ctrl</Kbd>+<Kbd>Home</Kbd> / <Kbd>Ctrl</Kbd>+<Kbd>End</Kbd>                         | The first / last cell of the whole grid.          |
+| <Kbd>PageUp</Kbd> / <Kbd>PageDown</Kbd>                                                  | Up or down by however many rows fit the viewport. |
+
+<Kbd>Alt</Kbd>+<Kbd>ArrowLeft</Kbd>/<Kbd>ArrowRight</Kbd> and <Kbd>Ctrl</Kbd>+
+<Kbd>ArrowLeft</Kbd>/<Kbd>ArrowRight</Kbd> are reserved for column resize and
+column reorder respectively, not plain navigation — a focused header claims them
+first. See [column resizing](/docs/react/column-resizing) and [column
+reordering](/docs/react/column-reordering) for what they do there.
+
+## ARIA attributes
+
+| Attribute              | Where                         | Description                                                                                                                                                                                                           |
+| ---------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `aria-rowcount`        | The grid                      | Total rows, header included — one more than the row count of `dataSource` as filtered and sorted.                                                                                                                     |
+| `aria-colcount`        | The grid                      | Total columns as currently sized and ordered.                                                                                                                                                                         |
+| `aria-rowindex`        | Every row                     | 1-based; the header is row 1, so the first body row is row 2.                                                                                                                                                         |
+| `aria-colindex`        | Every header and body cell    | 1-based, following the current column order.                                                                                                                                                                          |
+| `aria-multiselectable` | The grid                      | Set to `true` when `selectable.rows` or `selectable.columns` is `"multiple"`. Omitted otherwise.                                                                                                                      |
+| `aria-selected`        | Row, column header, and cell  | Reflects whether that row/column/cell is selected — but only when that dimension's selection is enabled at all. Omitted, not `false`, when it isn't: a display-only grid never claims to have an unselected anything. |
+| `aria-sort`            | Column headers                | `"ascending"` or `"descending"` once a sortable column has an active sort direction. Omitted — not `"none"` — for an unsorted or unsortable column.                                                                   |
+| `aria-keyshortcuts`    | Column headers and body cells | Lists whichever shortcuts that column or cell actually responds to (below), so they're discoverable rather than assumed.                                                                                              |
+
+A column header's `aria-keyshortcuts` names whichever of these apply, space-separated:
+
+- `Control+ArrowLeft Control+ArrowRight` when the column is [reorderable](/docs/react/column-reordering).
+- `Alt+ArrowLeft Alt+ArrowRight Alt+Enter` when the column is [resizable](/docs/react/column-resizing) — the first two nudge its width, the last sizes it to its content.
+- `Alt+ArrowUp` when the column is [sortable](/docs/react/column-sorting).
+
+A body cell's `aria-keyshortcuts` is `Space Enter` when cell selection is on — see [cell selection](/docs/react/cell-selection).
+
+## Live announcements
+
+A `role="status" aria-live="polite"` region, outside the table itself, reports changes that have no visual cue a screen reader could otherwise pick up on:
+
+- **Column resize** — only on release (`phase: "end"`), not on every frame of the drag: a live region updated on each pointermove would say nothing an assistive technology could keep up with. Announces the column's name and its new width in pixels.
+- **Column reorder** — on drop. Announces the column's name and its new position, as "column _n_ of _total_".
+- **Sort change** — a toggle, a stack, or a clear back to unsorted are each phrased differently: a plain toggle announces the column and its new direction; adding or updating a column in a multi-column sort also announces its priority ("key _n_ of _total_"); clearing a column's sort announces that its sort was cleared.
+- **Row and column selection changes** — only when more than one row or column changes in the same interaction (a range, a select-all, `Ctrl+A`). A single selection is already carried by that row's or column's own `aria-selected`, so announcing it too would talk over what a screen reader just read. Announces the resulting total, e.g. "3 rows selected".
+- **Cell selection** — every time a selection lands on a cell. Unlike row and column selection, a cell selection is always exactly one cell, so there's no multi-item threshold to cross — the announcement fires on every commit instead, naming the column and row the selected cell is in.
+
+## See also
+
+- [DataGridComponent](/docs/react/data-grid) for the props these behaviors are built on.
+- [Row](/docs/react/row-selection), [column](/docs/react/column-selection), and [cell](/docs/react/cell-selection) selection, each in depth.
+- [Column resizing](/docs/react/column-resizing), [reordering](/docs/react/column-reordering), and [sorting](/docs/react/column-sorting), each in depth.
