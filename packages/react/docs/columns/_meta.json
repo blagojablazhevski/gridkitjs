@@ -1,6 +1,7 @@
 {
   "title": "Columns",
   "order": [
+    "column-definition",
     "column-templates",
     "column-resizing",
     "column-reordering",

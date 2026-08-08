@@ -140,6 +140,33 @@ export function resolveColumnLabel<Row, Node>(
     : headerTemplate;
 }
 
+/** Which of a column header's keyboard interactions to announce. */
+export interface KeyShortcutCapabilities {
+  reorderable: boolean;
+  resizable: boolean;
+  sortable: boolean;
+}
+
+/**
+ * The `aria-keyshortcuts` string for a column header, naming only the keys
+ * that column actually responds to — so the keys are discoverable, since
+ * none of them is a convention a user would try unprompted.
+ */
+export function buildKeyShortcuts(
+  capabilities: KeyShortcutCapabilities,
+): string {
+  return [
+    capabilities.reorderable ? "Control+ArrowLeft Control+ArrowRight" : "",
+    // Alt+Enter is the keyboard equivalent of double-clicking the resize
+    // handle to size the column to its content — same gate as the nudge
+    // shortcuts, since both are resize actions.
+    capabilities.resizable ? "Alt+ArrowLeft Alt+ArrowRight Alt+Enter" : "",
+    capabilities.sortable ? "Alt+ArrowUp" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
 /**
  * Accesses a value at a dotted path, e.g. `foo.bar.baz`.
  *

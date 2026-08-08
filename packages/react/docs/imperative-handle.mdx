@@ -1,0 +1,85 @@
+---
+title: "Imperative handle"
+description: "The DataGridApi reached through DataGridComponent's ref — reading live grid state and triggering focus, scroll, and selection actions."
+---
+
+`DataGridComponent` accepts a `ref` typed `Ref<DataGridApi<Row>>`, for the state and actions that aren't otherwise reachable from outside: the grid's DOM nodes, its live column sizing/order/sort and selection, and the handful of actions every grid ref carries.
+
+```ts
+import { useRef } from "react";
+import { DataGridComponent, type DataGridApi } from "@gridkitjs/react";
+
+const gridRef = useRef<DataGridApi<Row>>(null);
+
+<DataGridComponent ref={gridRef} columns={columns} dataSource={rows} />;
+
+gridRef.current?.scrollToRow("42");
+gridRef.current?.getColumnSizing();
+```
+
+Sizing, order, sort, and selection stay uncontrolled exactly as they are without a ref — set their starting values with `defaultColumnSizing` and friends. `DataGridApi` is for reading current state and triggering the actions below, not a second way to drive that same state.
+
+## Elements
+
+| Member    | Type                       | Description                             |
+| --------- | -------------------------- | --------------------------------------- |
+| `element` | `HTMLDivElement \| null`   | The grid's scrollable viewport element. |
+| `table`   | `HTMLTableElement \| null` | The grid's `<table>` element.           |
+
+## Reading state
+
+| Member                 | Returns                                     | Description                                               |
+| ---------------------- | ------------------------------------------- | --------------------------------------------------------- |
+| `getRows()`            | `readonly ResolvedRow<Row>[]`               | Rows as currently filtered and sorted — what's rendered.  |
+| `getColumns()`         | `readonly ResolvedColumn<Row>[]`            | Columns as currently sized and ordered — what's rendered. |
+| `getColumnSizing()`    | `ColumnSizingState`                         | Column widths, keyed by column id.                        |
+| `getColumnOrder()`     | `ColumnOrderState`                          | Column ids in their current render order.                 |
+| `getColumnSort()`      | `ColumnSortState`                           | The active sort, in priority order.                       |
+| `getRowSelection()`    | `SelectionState`                            | Selected row ids.                                         |
+| `getColumnSelection()` | `SelectionState`                            | Selected column ids.                                      |
+| `getCellSelection()`   | `CellSelectionState`                        | The selected cell, if any.                                |
+| `getFocusedCell()`     | `{ rowIndex: number; columnIndex: number }` | The cell currently holding the grid's single tab stop.    |
+
+## Resolved row and column
+
+`getRows()` and `getColumns()` return `ResolvedRow<Row>` and `ResolvedColumn<Row>` — the same shapes the selection events carry, resolved once here so no other doc page repeats them.
+
+`ResolvedRow<Row>`:
+
+| Field      | Type     | Description                                                          |
+| ---------- | -------- | -------------------------------------------------------------------- |
+| `rowId`    | `string` | This row's id, as `getRowId` (or the position fallback) resolved it. |
+| `row`      | `Row`    | The row itself.                                                      |
+| `rowIndex` | `number` | Position among the rows as rendered — filtered and sorted.           |
+
+`ResolvedColumn<Row>`:
+
+| Field         | Type                            | Description                                                                                   |
+| ------------- | ------------------------------- | --------------------------------------------------------------------------------------------- |
+| `column`      | `ColumnDefinition<Row>`         | The column definition this was resolved from.                                                 |
+| `id`          | `string`                        | The column's id.                                                                              |
+| `width`       | `number`                        | This column's current width, in px.                                                           |
+| `sized`       | `boolean`                       | Whether `width` came from a user resize rather than the column definition or an auto-fit.     |
+| `label`       | `Node \| string`                | What the header shows: the column's own `headerTemplate`, or a label read off the field path. |
+| `resizable`   | `boolean`                       | Whether this column can be resized, after the grid-level default.                             |
+| `reorderable` | `boolean`                       | Whether this column can be dragged, after the grid-level default.                             |
+| `alignment`   | `"left" \| "center" \| "right"` | How this column's cells align, after falling back to its type.                                |
+
+## Actions
+
+| Member                               | Description                                                                               |
+| ------------------------------------ | ----------------------------------------------------------------------------------------- |
+| `focusCell(rowIndex, columnIndex)`   | Moves the grid's tab stop, and the browser's focus, to a cell.                            |
+| `clearSelection()`                   | Clears row, column, and cell selection together — the same as pressing <Kbd>Escape</Kbd>. |
+| `selectAllRows()`                    | Selects every row — the same as <Kbd>Ctrl</Kbd>+<Kbd>A</Kbd>.                             |
+| `scrollToRow(rowId, options?)`       | Scrolls the row with the given id into view, if it is currently shown.                    |
+| `scrollToColumn(columnId, options?)` | Scrolls the column with the given id into view.                                           |
+
+`options` on `scrollToRow`/`scrollToColumn` is a standard
+[`ScrollIntoViewOptions`](https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollIntoView),
+passed straight through.
+
+## See also
+
+- [DataGridComponent](/docs/react/data-grid) for the rest of the component's props.
+- [Events](/docs/react/events) for callbacks that report the same interactions as they happen, rather than being queried on demand.

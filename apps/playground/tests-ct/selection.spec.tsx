@@ -89,6 +89,28 @@ test.describe("mode matrix", () => {
     await expect(firstCell).toHaveAttribute("aria-selected", "true");
   });
 
+  test("selecting a cell announces it, since a single cell selection never crosses the row/column live-region's multi-item threshold", async ({
+    mount,
+  }) => {
+    const root = await mountGrid(
+      mount,
+      <DataGridComponent
+        columns={columns}
+        dataSource={buildRows(3)}
+        label="Cell announce"
+        selectable={{ cells: "single" }}
+      />,
+    );
+    const status = root.locator('[role="status"]');
+    await expect(status).toHaveText("");
+
+    await root.locator("tbody tr").nth(1).locator("td").nth(1).click();
+    await expect(status).toHaveText("name, row 2, selected");
+
+    await root.locator("tbody tr").nth(0).locator("td").nth(0).click();
+    await expect(status).toHaveText("id, row 1, selected");
+  });
+
   test("rows and cells together report both from the same click", async ({
     mount,
   }) => {

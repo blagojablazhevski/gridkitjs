@@ -5,22 +5,17 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type RefObject,
 } from "react";
+import {
+  clampFocus,
+  nextFocusForKey,
+  HEADER_ROW,
+  type GridFocus,
+} from "@gridkitjs/core";
 
-/**
- * The header's row index. One coordinate space covers the header and the body
- * so that arrowing up out of the first row reaches the header without a case
- * of its own, and every other move is plain arithmetic.
- */
-export const HEADER_ROW = -1;
+export { HEADER_ROW, type GridFocus };
 
 /** Rows a page key moves when the viewport cannot be measured. */
 const FALLBACK_PAGE = 10;
-
-/** The cell the grid's single tab stop sits on. */
-export interface GridFocus {
-  readonly rowIndex: number;
-  readonly columnIndex: number;
-}
 
 interface UseGridNavigationOptions {
   tableRef: RefObject<HTMLTableElement | null>;
@@ -42,22 +37,20 @@ export interface GridNavigationApi {
 }
 
 /**
- * Holds a coordinate inside the grid, so that a focus surviving a column
- * removal or a shorter page never leaves the grid with no tab stop at all —
- * which is a grid a keyboard cannot reach.
+ * `0` for the column holding the tab stop and `-1` for every other.
+ * Standalone rather than reached only through the hook's own `tabIndexFor`,
+ * because `GridRow` is `memo()`-wrapped and cannot take the whole `nav`
+ * object as a prop without defeating that boundary. Takes the row's own
+ * already-narrowed `focusedColumnIndex` (`null` when focus sits on a
+ * different row) rather than a `rowIndex`/`GridFocus` pair, since that
+ * narrowing — done once per row in `GridBody` — is what keeps a focus move
+ * from re-rendering every row instead of the two it actually touches.
  */
-function clampFocus(
-  focus: GridFocus,
-  rowCount: number,
-  columnCount: number,
-): GridFocus {
-  return {
-    rowIndex: Math.min(Math.max(focus.rowIndex, HEADER_ROW), rowCount - 1),
-    columnIndex: Math.min(
-      Math.max(focus.columnIndex, 0),
-      Math.max(columnCount - 1, 0),
-    ),
-  };
+export function tabIndexFor(
+  columnIndex: number,
+  focusedColumnIndex: number | null,
+): 0 | -1 {
+  return columnIndex === focusedColumnIndex ? 0 : -1;
 }
 
 /**
@@ -153,57 +146,22 @@ export default function useGridNavigation({
     setStored(next);
   }
 
-  function tabIndexFor(rowIndex: number, columnIndex: number): 0 | -1 {
-    return rowIndex === focus.rowIndex && columnIndex === focus.columnIndex
-      ? 0
-      : -1;
-  }
-
   function onKeyDown(event: ReactKeyboardEvent<HTMLElement>): void {
-    // Alt on an arrow resizes and Ctrl on one reorders; the header claims both
-    // before this runs, and elsewhere they belong to the browser.
-    if (event.altKey) {
+    const next = nextFocusForKey(
+      event.key,
+      {
+        ctrlKey: event.ctrlKey,
+        metaKey: event.metaKey,
+        altKey: event.altKey,
+        shiftKey: event.shiftKey,
+      },
+      focus,
+      rowCount,
+      columnCount,
+      pageSize(),
+    );
+    if (next === null) {
       return;
-    }
-
-    const { rowIndex, columnIndex } = focus;
-    let next: GridFocus;
-
-    switch (event.key) {
-      case "ArrowLeft":
-        if (event.ctrlKey) return;
-        next = { rowIndex, columnIndex: columnIndex - 1 };
-        break;
-      case "ArrowRight":
-        if (event.ctrlKey) return;
-        next = { rowIndex, columnIndex: columnIndex + 1 };
-        break;
-      case "ArrowUp":
-        next = { rowIndex: rowIndex - 1, columnIndex };
-        break;
-      case "ArrowDown":
-        next = { rowIndex: rowIndex + 1, columnIndex };
-        break;
-      // Ctrl takes Home and End to the grid's ends rather than the row's, which
-      // is the one place Ctrl is navigation rather than reorder.
-      case "Home":
-        next = event.ctrlKey
-          ? { rowIndex: HEADER_ROW, columnIndex: 0 }
-          : { rowIndex, columnIndex: 0 };
-        break;
-      case "End":
-        next = event.ctrlKey
-          ? { rowIndex: rowCount - 1, columnIndex: columnCount - 1 }
-          : { rowIndex, columnIndex: columnCount - 1 };
-        break;
-      case "PageUp":
-        next = { rowIndex: rowIndex - pageSize(), columnIndex };
-        break;
-      case "PageDown":
-        next = { rowIndex: rowIndex + pageSize(), columnIndex };
-        break;
-      default:
-        return;
     }
 
     // Taken even when the move lands nowhere: an arrow at the last row would
@@ -214,5 +172,14 @@ export default function useGridNavigation({
 
   // A new object each render, as the other hooks here return: the handlers
   // close over the focus they move from.
-  return { focus, tabIndexFor, focusCell, onKeyDown };
+  return {
+    focus,
+    tabIndexFor: (rowIndex, columnIndex) =>
+      tabIndexFor(
+        columnIndex,
+        rowIndex === focus.rowIndex ? focus.columnIndex : null,
+      ),
+    focusCell,
+    onKeyDown,
+  };
 }

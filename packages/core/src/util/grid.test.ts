@@ -4,6 +4,7 @@ import type { ColumnDefinition, FieldPath } from "../types";
 import {
   accessDotted,
   alignmentForType,
+  buildKeyShortcuts,
   defineColumnsFromRows,
   resolveColumnLabel,
   resolveRowId,
@@ -322,5 +323,39 @@ describe("accessDotted", () => {
     const obj = { foo: { bar: { baz: "qux" } } };
 
     expect(accessDotted(obj, "foo.bar.baz")).toBe("qux");
+  });
+});
+
+describe("buildKeyShortcuts", () => {
+  test("names every capability the column has", () => {
+    expect(
+      buildKeyShortcuts({
+        reorderable: true,
+        resizable: true,
+        sortable: true,
+      }),
+    ).toBe(
+      "Control+ArrowLeft Control+ArrowRight Alt+ArrowLeft Alt+ArrowRight Alt+Enter Alt+ArrowUp",
+    );
+  });
+
+  test("omits a capability the column does not have", () => {
+    expect(
+      buildKeyShortcuts({
+        reorderable: false,
+        resizable: true,
+        sortable: false,
+      }),
+    ).toBe("Alt+ArrowLeft Alt+ArrowRight Alt+Enter");
+  });
+
+  test("is empty for a column with none of the three", () => {
+    expect(
+      buildKeyShortcuts({
+        reorderable: false,
+        resizable: false,
+        sortable: false,
+      }),
+    ).toBe("");
   });
 });

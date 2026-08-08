@@ -142,11 +142,11 @@ test("aria-keyshortcuts reflects exactly the applicable reorder/resize combinati
   await expect(headerLocators.nth(0)).not.toHaveAttribute("aria-keyshortcuts");
   await expect(headerLocators.nth(1)).toHaveAttribute(
     "aria-keyshortcuts",
-    "Alt+ArrowLeft Alt+ArrowRight",
+    "Alt+ArrowLeft Alt+ArrowRight Alt+Enter",
   );
   await expect(headerLocators.nth(2)).toHaveAttribute(
     "aria-keyshortcuts",
-    "Control+ArrowLeft Control+ArrowRight Alt+ArrowLeft Alt+ArrowRight",
+    "Control+ArrowLeft Control+ArrowRight Alt+ArrowLeft Alt+ArrowRight Alt+Enter",
   );
 });
 
@@ -180,7 +180,7 @@ test("neither label nor labelledBy given means neither attribute appears", async
   await expect(table).not.toHaveAttribute("aria-labelledby");
 });
 
-test('role="grid"/"row"/"gridcell" are present throughout', async ({
+test('role="grid"/"row"/"columnheader"/"gridcell" are present throughout, the header role set explicitly like the body cell\'s', async ({
   mount,
 }) => {
   const root = await mountGrid(
@@ -194,8 +194,49 @@ test('role="grid"/"row"/"gridcell" are present throughout', async ({
   await expect(root.getByRole("grid")).toHaveCount(1);
   // The header row plus 2 body rows.
   await expect(root.getByRole("row")).toHaveCount(3);
+  await expect(root.getByRole("columnheader")).toHaveCount(2);
   // 2 rows x 2 columns.
   await expect(root.getByRole("gridcell")).toHaveCount(4);
+  // Explicit, not left to the `<th scope="col">` implicit mapping — the
+  // same reasoning `GridRow.tsx` already applies to `role="gridcell"`.
+  await expect(root.locator("thead th").first()).toHaveAttribute(
+    "role",
+    "columnheader",
+  );
+});
+
+test("aria-keyshortcuts on body cells advertises Space/Enter when cell selection is enabled", async ({
+  mount,
+}) => {
+  const root = await mountGrid(
+    mount,
+    <DataGridComponent
+      columns={columns}
+      dataSource={buildRows(2)}
+      label="Body shortcuts on"
+      selectable={{ cells: "single" }}
+    />,
+  );
+  await expect(root.locator("tbody td").first()).toHaveAttribute(
+    "aria-keyshortcuts",
+    "Space Enter",
+  );
+});
+
+test("aria-keyshortcuts is absent from body cells when cell selection is off", async ({
+  mount,
+}) => {
+  const root = await mountGrid(
+    mount,
+    <DataGridComponent
+      columns={columns}
+      dataSource={buildRows(2)}
+      label="Body shortcuts off"
+    />,
+  );
+  await expect(root.locator("tbody td").first()).not.toHaveAttribute(
+    "aria-keyshortcuts",
+  );
 });
 
 test("a plain single-row selection leaves the live region unchanged; a multi-row Shift-click updates it with a count", async ({

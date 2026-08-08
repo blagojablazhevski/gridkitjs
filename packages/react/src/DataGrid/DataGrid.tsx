@@ -1,4 +1,11 @@
-import { useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+  type Ref,
+} from "react";
 import {
   applyColumnOrder,
   defineColumnsFromRows,
@@ -32,6 +39,8 @@ import {
 } from "@gridkitjs/core";
 import GridHeader from "./components/GridHeader";
 import GridBody from "./components/GridBody";
+import { ariaAttr } from "./ariaAttr";
+import { classNames } from "./classNames";
 import useColumnDrag, { type DropTarget } from "./useColumnDrag";
 import useColumnResize from "./useColumnResize";
 import useColumnSort from "./useColumnSort";
@@ -70,6 +79,43 @@ export type CellSelectionChangeEvent<Row> = CoreCellSelectionChangeEvent<
   Row,
   ReactNode
 >;
+
+/**
+ * Imperative handle for a mounted `DataGridComponent`, reached via its `ref`
+ * prop. Read-plus-standard-actions: getters mirror the grid's live state,
+ * and the actions are the ones every grid ref carries (focus, clear/select
+ * all, scroll-to). Sizing, order, sort, and selection stay uncontrolled via
+ * their existing `default*` props — this is not a second, imperative-only
+ * way to drive that same state.
+ */
+export interface DataGridApi<Row> {
+  /** The grid's scrollable viewport element. */
+  readonly element: HTMLDivElement | null;
+  /** The grid's `<table>` element. */
+  readonly table: HTMLTableElement | null;
+
+  /** Rows as currently filtered and sorted — what's rendered. */
+  getRows(): readonly ResolvedRow<Row>[];
+  /** Columns as currently sized and ordered — what's rendered. */
+  getColumns(): readonly ResolvedColumn<Row>[];
+
+  getColumnSizing(): ColumnSizingState;
+  getColumnOrder(): ColumnOrderState;
+  getColumnSort(): ColumnSortState;
+  getRowSelection(): SelectionState;
+  getColumnSelection(): SelectionState;
+  getCellSelection(): CellSelectionState;
+  /** The cell currently holding the grid's single tab stop. */
+  getFocusedCell(): { rowIndex: number; columnIndex: number };
+
+  focusCell(rowIndex: number, columnIndex: number): void;
+  clearSelection(): void;
+  selectAllRows(): void;
+  /** Scrolls the row with the given id into view, if it is currently shown. */
+  scrollToRow(rowId: string, options?: ScrollIntoViewOptions): void;
+  /** Scrolls the column with the given id into view. */
+  scrollToColumn(columnId: string, options?: ScrollIntoViewOptions): void;
+}
 
 export type Borders = "horizontal" | "vertical" | "all" | "none";
 
@@ -184,6 +230,8 @@ export interface DataGridProps<Row> extends SelectionCallbacks<Row> {
    * Takes precedence over `label`, as `aria-labelledby` does.
    */
   labelledBy?: string | undefined;
+  /** Imperative handle for reading live grid state and triggering actions. */
+  ref?: Ref<DataGridApi<Row>> | undefined;
 }
 
 export function DataGridComponent<Row>({
@@ -210,6 +258,7 @@ export function DataGridComponent<Row>({
   defaultFilter,
   label,
   labelledBy,
+  ref,
   ...callbacks
 }: DataGridProps<Row>) {
   const hoverRows = hoverable?.rows ?? true;
@@ -438,10 +487,52 @@ export function DataGridComponent<Row>({
     setCellSelection,
     callbacks,
     announce,
+    columnName,
   });
 
   const multiselectable =
     selection.rowMode === "multiple" || selection.columnMode === "multiple";
+
+  /**
+   * No deps array: `nav`, `selection`, `resize`, and `drag` are all freshly
+   * constructed every render (none of those hooks memoize their returned
+   * API), so the handle has to be rebuilt every render too or its closures
+   * would go stale.
+   */
+  useImperativeHandle(ref, () => ({
+    get element() {
+      return viewportRef.current;
+    },
+    get table() {
+      return tableRef.current;
+    },
+    getRows: () => shownRows,
+    getColumns: () => resolved,
+    getColumnSizing: () => sizing,
+    getColumnOrder: () => order,
+    getColumnSort: () => sort,
+    getRowSelection: () => rowSelection,
+    getColumnSelection: () => columnSelection,
+    getCellSelection: () => cellSelection,
+    getFocusedCell: () => nav.focus,
+    focusCell: nav.focusCell,
+    clearSelection: selection.clear,
+    selectAllRows: selection.selectAllRows,
+    scrollToRow: (rowId, options) => {
+      const index = shownRows.findIndex((entry) => entry.rowId === rowId);
+      if (index === -1) return;
+      tableRef.current?.tBodies[0]?.rows[index]?.scrollIntoView(options);
+    },
+    scrollToColumn: (columnId, options) => {
+      const cells = tableRef.current?.querySelectorAll("[data-gridkit-column]");
+      const cell = cells
+        ? Array.from(cells).find(
+            (entry) => entry.getAttribute("data-gridkit-column") === columnId,
+          )
+        : undefined;
+      cell?.scrollIntoView(options);
+    },
+  }));
 
   return (
     <div className="gridkit-data-grid-viewport" ref={viewportRef}>
@@ -457,10 +548,13 @@ export function DataGridComponent<Row>({
         // The header is a row too, and counted from one.
         aria-rowcount={shownRows.length + 1}
         aria-colcount={resolved.length}
-        {...(multiselectable && { "aria-multiselectable": true })}
-        {...(labelledBy !== undefined && { "aria-labelledby": labelledBy })}
-        {...(labelledBy === undefined &&
-          label !== undefined && { "aria-label": label })}
+        {...ariaAttr(multiselectable, "aria-multiselectable", true)}
+        {...ariaAttr(labelledBy !== undefined, "aria-labelledby", labelledBy)}
+        {...ariaAttr(
+          labelledBy === undefined && label !== undefined,
+          "aria-label",
+          label,
+        )}
         onKeyDown={(event) => {
           /*
            * The two keys that address the grid rather than a cell, and so are
@@ -489,7 +583,7 @@ export function DataGridComponent<Row>({
         // Widths are only honoured exactly when the table is as wide as its
         // columns; at `100%` the fixed layout redistributes the difference.
         style={{ width: totalColumnWidth(resolved) }}
-        className={[
+        className={classNames(
           "gridkit-data-grid",
           borders ? `borders-${borders}` : "",
           // Hover is on by default and selection off, so one set of classes
@@ -501,9 +595,7 @@ export function DataGridComponent<Row>({
           selection.rowMode === false ? "" : "selectable-rows",
           selection.columnMode === false ? "" : "selectable-columns",
           selection.cellMode === false ? "" : "selectable-cells",
-        ]
-          .filter(Boolean)
-          .join(" ")}
+        )}
       >
         <colgroup>
           {resolved.map((entry) => (

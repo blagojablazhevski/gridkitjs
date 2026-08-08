@@ -6,10 +6,12 @@ import {
 import {
   movesColumn,
   resolveDropBefore,
+  resolveKeyboardDropTarget,
   type ColumnOrderState,
   type DropSide,
 } from "@gridkitjs/core";
 import type { ResolvedColumn } from "./DataGrid";
+import { startPointerGesture } from "./pointerGesture";
 
 /**
  * How far the pointer travels before a press becomes a drag. Below it the
@@ -106,104 +108,72 @@ export default function useColumnDrag<Row>({
       setGhostTransform(`translate(${String(x - grabX)}px, ${String(y)}px)`);
     }
 
-    header.setPointerCapture(pointerId);
-
-    function move(moveEvent: PointerEvent): void {
-      const { clientX, clientY } = moveEvent;
-
-      if (!dragging) {
-        if (Math.abs(clientX - startX) < DRAG_THRESHOLD) {
-          return;
-        }
-        dragging = true;
-        // Latched for the `click` that follows the release, which is the only
-        // thing that can tell a drag apart from a press in the same spot.
-        dragged.current = true;
-        setDraggedColumnId(entry.id);
-      }
-
-      placeGhost(clientX, clientY);
-
-      // Hit-tested rather than read from the event's target, which pointer
-      // capture pins to the header the drag opened on.
-      const over = headerAt(clientX, clientY);
-      const overId = over?.getAttribute("data-gridkit-column");
-
-      // The rect is read fresh each move, so a width changed mid-drag cannot
-      // leave the midpoint stale.
-      const beforeId =
-        over && overId
-          ? resolveDropBefore(order, overId, sideOf(over, clientX))
-          : undefined;
-
-      // A gap the column already sits in would promise a move that
-      // `moveColumnBefore` then declines to make.
-      target =
-        beforeId !== undefined && movesColumn(order, entry.id, beforeId)
-          ? { kind: "column-order", beforeId }
-          : null;
-
-      setDropTarget(target);
-    }
-
-    function stop(): void {
-      header.removeEventListener("pointermove", move);
-      header.removeEventListener("pointerup", end);
-      header.removeEventListener("pointercancel", cancel);
-      window.removeEventListener("keydown", onKeyDown);
-      if (header.hasPointerCapture(pointerId)) {
-        header.releasePointerCapture(pointerId);
-      }
+    function reset(): void {
       setGhostTransform(null);
       setDraggedColumnId(null);
       setDropTarget(null);
     }
 
-    function end(): void {
-      const dropped = target;
-      stop();
-      if (dragging && dropped !== null) {
-        onDrop(dropped, entry.id);
-      }
-    }
+    startPointerGesture(header, pointerId, {
+      onMove(moveEvent) {
+        const { clientX, clientY } = moveEvent;
 
-    /** Escape and a cancelled pointer both leave the order as it was. */
-    function cancel(): void {
-      target = null;
-      stop();
-    }
+        if (!dragging) {
+          if (Math.abs(clientX - startX) < DRAG_THRESHOLD) {
+            return;
+          }
+          dragging = true;
+          // Latched for the `click` that follows the release, which is the
+          // only thing that can tell a drag apart from a press in the same
+          // spot.
+          dragged.current = true;
+          setDraggedColumnId(entry.id);
+        }
 
-    function onKeyDown(keyEvent: KeyboardEvent): void {
-      if (keyEvent.key === "Escape") {
-        cancel();
-      }
-    }
+        placeGhost(clientX, clientY);
 
-    header.addEventListener("pointermove", move);
-    header.addEventListener("pointerup", end);
-    header.addEventListener("pointercancel", cancel);
-    window.addEventListener("keydown", onKeyDown);
+        // Hit-tested rather than read from the event's target, which pointer
+        // capture pins to the header the drag opened on.
+        const over = headerAt(clientX, clientY);
+        const overId = over?.getAttribute("data-gridkit-column");
+
+        // The rect is read fresh each move, so a width changed mid-drag
+        // cannot leave the midpoint stale.
+        const beforeId =
+          over && overId
+            ? resolveDropBefore(order, overId, sideOf(over, clientX))
+            : undefined;
+
+        // A gap the column already sits in would promise a move that
+        // `moveColumnBefore` then declines to make.
+        target =
+          beforeId !== undefined && movesColumn(order, entry.id, beforeId)
+            ? { kind: "column-order", beforeId }
+            : null;
+
+        setDropTarget(target);
+      },
+      onEnd() {
+        const dropped = target;
+        reset();
+        if (dragging && dropped !== null) {
+          onDrop(dropped, entry.id);
+        }
+      },
+      // Escape and a cancelled pointer both leave the order as it was.
+      onCancel() {
+        target = null;
+        reset();
+      },
+    });
   }
 
   function moveByKeyboard(entry: ResolvedColumn<Row>, direction: -1 | 1): void {
-    const index = order.indexOf(entry.id);
-    if (index === -1) {
+    const beforeId = resolveKeyboardDropTarget(order, entry.id, direction);
+    if (beforeId === undefined) {
       return;
     }
-
-    /**
-     * Moving right lands in front of the id two along: the gap immediately
-     * after a column is the one it already sits in.
-     */
-    const targetIndex = direction === -1 ? index - 1 : index + 2;
-    if (targetIndex < 0) {
-      return;
-    }
-
-    onDrop(
-      { kind: "column-order", beforeId: order[targetIndex] ?? null },
-      entry.id,
-    );
+    onDrop({ kind: "column-order", beforeId }, entry.id);
   }
 
   // A new object each render, as `useColumnResize` returns: the handlers close

@@ -2,8 +2,10 @@ import { describe, expect, test } from "vitest";
 
 import type { SelectionState } from "../types";
 import {
+  applySelectionIntent,
   clearSelection,
   diffSelection,
+  intentOf,
   isSameCell,
   selectAll,
   selectCell,
@@ -291,5 +293,57 @@ describe("toggleCellSelection", () => {
     const selection = { rowId: "2", columnId: "Name" };
 
     expect(toggleCellSelection(selection, cell, false)).toBe(selection);
+  });
+});
+
+describe("intentOf", () => {
+  test("is replace with no modifiers", () => {
+    expect(intentOf({ ctrlKey: false, metaKey: false, shiftKey: false })).toBe(
+      "replace",
+    );
+  });
+
+  test("is toggle for Ctrl or Cmd", () => {
+    expect(intentOf({ ctrlKey: true, metaKey: false, shiftKey: false })).toBe(
+      "toggle",
+    );
+    expect(intentOf({ ctrlKey: false, metaKey: true, shiftKey: false })).toBe(
+      "toggle",
+    );
+  });
+
+  test("is range for Shift, over any other modifier", () => {
+    expect(intentOf({ ctrlKey: false, metaKey: false, shiftKey: true })).toBe(
+      "range",
+    );
+    expect(intentOf({ ctrlKey: true, metaKey: false, shiftKey: true })).toBe(
+      "range",
+    );
+  });
+});
+
+describe("applySelectionIntent", () => {
+  test("dispatches toggle to toggleSelection", () => {
+    expect(
+      applySelectionIntent(["a"], ids, null, "b", "toggle", "multiple"),
+    ).toEqual(["a", "b"]);
+  });
+
+  test("dispatches range to selectRange, anchored at anchorId", () => {
+    expect(
+      applySelectionIntent([], ids, "b", "d", "range", "multiple"),
+    ).toEqual(["b", "c", "d"]);
+  });
+
+  test("a range with no anchor spans from the id to itself", () => {
+    expect(
+      applySelectionIntent([], ids, null, "c", "range", "multiple"),
+    ).toEqual(["c"]);
+  });
+
+  test("dispatches anything else to selectOnly", () => {
+    expect(
+      applySelectionIntent(["a", "b"], ids, null, "c", "replace", "multiple"),
+    ).toEqual(["c"]);
   });
 });

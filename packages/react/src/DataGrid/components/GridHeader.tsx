@@ -1,11 +1,17 @@
+import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { KEYBOARD_STEP } from "@gridkitjs/core";
+import { buildKeyShortcuts, intentOf, KEYBOARD_STEP } from "@gridkitjs/core";
 import type { ResolvedColumn } from "../DataGrid";
+import { ariaAttr } from "../ariaAttr";
+import { classNames } from "../classNames";
 import type { ColumnDragApi } from "../useColumnDrag";
 import type { ColumnResizeApi } from "../useColumnResize";
 import type { ColumnSortApi } from "../useColumnSort";
 import { HEADER_ROW, type GridNavigationApi } from "../useGridNavigation";
-import { intentOf, type GridSelectionApi } from "../useGridSelection";
+import {
+  keyboardSelectIntent,
+  type GridSelectionApi,
+} from "../useGridSelection";
 
 interface GridHeaderProps<Row> {
   columns: readonly ResolvedColumn<Row>[];
@@ -17,6 +23,23 @@ interface GridHeaderProps<Row> {
   selection: GridSelectionApi;
 }
 
+/** The common attributes behind every icon here — just the `<path>`s differ. */
+function Icon({ children }: { children: ReactNode }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {children}
+    </svg>
+  );
+}
+
 /**
  * The two glyphs a sort toggle shows: a neutral hint before a column has a
  * direction, and a single chevron reused for both directions once it does —
@@ -24,34 +47,18 @@ interface GridHeaderProps<Row> {
  */
 function ChevronsUpDownIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
+    <Icon>
       <path d="m7 15 5 5 5-5" />
       <path d="m7 9 5-5 5 5" />
-    </svg>
+    </Icon>
   );
 }
 
 function ChevronUpIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
+    <Icon>
       <path d="m18 15-6-6-6 6" />
-    </svg>
+    </Icon>
   );
 }
 
@@ -88,28 +95,30 @@ export default function GridHeader<Row>({
           const sortDirection = sort.directionFor(entry.id);
           const sortPriority = sort.priorityFor(entry.id);
 
-          /**
-           * Announced so the keys are discoverable, since neither is a
-           * convention a user would try unprompted.
-           */
-          const shortcuts = [
-            entry.reorderable ? "Control+ArrowLeft Control+ArrowRight" : "",
-            entry.resizable ? "Alt+ArrowLeft Alt+ArrowRight" : "",
-            sortable ? "Alt+ArrowUp" : "",
-          ]
-            .filter(Boolean)
-            .join(" ");
+          const shortcuts = buildKeyShortcuts({
+            reorderable: entry.reorderable,
+            resizable: entry.resizable,
+            sortable,
+          });
 
           return (
             <th
               key={entry.id}
               scope="col"
+              // Explicit, matching `GridRow.tsx`'s `role="gridcell"` on the
+              // body `<td>`: both sit inside a `<table role="grid">`, and
+              // mixing that non-native ancestor role with descendants that
+              // rely on implicit native role mapping is inconsistently
+              // resolved across browser/AT combinations.
+              role="columnheader"
               data-gridkit-column={entry.id}
               aria-colindex={index + 1}
               tabIndex={nav.tabIndexFor(HEADER_ROW, index)}
-              {...(selection.columnMode !== false && {
-                "aria-selected": selected,
-              })}
+              {...ariaAttr(
+                selection.columnMode !== false,
+                "aria-selected",
+                selected,
+              )}
               onFocus={() => {
                 nav.focusCell(HEADER_ROW, index);
               }}
@@ -148,6 +157,13 @@ export default function GridHeader<Row>({
                   resize.nudge(entry, direction * KEYBOARD_STEP);
                   return;
                 }
+                // The keyboard equivalent of double-clicking the resize
+                // handle, which auto-fits the column to its content.
+                if (event.key === "Enter" && event.altKey && entry.resizable) {
+                  event.preventDefault();
+                  resize.sizeToContent(entry);
+                  return;
+                }
                 if (event.key === "ArrowUp" && event.altKey && sortable) {
                   event.preventDefault();
                   sort.toggle(entry, { shiftKey: event.shiftKey });
@@ -159,17 +175,13 @@ export default function GridHeader<Row>({
                   event.preventDefault();
                   selection.selectColumn(
                     entry.id,
-                    intentOf({
-                      ctrlKey: event.key === " " || event.ctrlKey,
-                      metaKey: event.metaKey,
-                      shiftKey: event.shiftKey,
-                    }),
+                    intentOf(keyboardSelectIntent(event)),
                   );
                   return;
                 }
                 nav.onKeyDown(event);
               }}
-              className={[
+              className={classNames(
                 "header-cell",
                 entry.reorderable ? "is-reorderable" : "",
                 selected ? "is-selected" : "",
@@ -179,15 +191,13 @@ export default function GridHeader<Row>({
                 dropAfter ? "is-drop-after" : "",
                 column.wrap?.header ? "is-wrapped" : "",
                 column.headerClassName ?? "",
-              ]
-                .filter(Boolean)
-                .join(" ")}
-              {...(shortcuts !== "" && { "aria-keyshortcuts": shortcuts })}
-              {...(sortable &&
-                sortDirection !== null && {
-                  "aria-sort":
-                    sortDirection === "asc" ? "ascending" : "descending",
-                })}
+              )}
+              {...ariaAttr(shortcuts !== "", "aria-keyshortcuts", shortcuts)}
+              {...ariaAttr<"aria-sort", "ascending" | "descending">(
+                sortable && sortDirection !== null,
+                "aria-sort",
+                sortDirection === "asc" ? "ascending" : "descending",
+              )}
               {...(entry.reorderable && {
                 onPointerDown: (event) => {
                   drag.startDrag(entry, event);
@@ -203,12 +213,10 @@ export default function GridHeader<Row>({
                  * Alt+Shift+ArrowUp (stacking).
                  */
                 <span
-                  className={[
+                  className={classNames(
                     "header-sort-toggle",
                     sortDirection !== null ? `is-sorted-${sortDirection}` : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
+                  )}
                   aria-hidden="true"
                   tabIndex={-1}
                   onPointerDown={(event) => {

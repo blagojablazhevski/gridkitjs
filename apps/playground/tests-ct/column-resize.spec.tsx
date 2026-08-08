@@ -249,6 +249,50 @@ test("double-click on a column with no rows is a no-op", async ({ mount }) => {
   expect(events).toHaveLength(0);
 });
 
+test("Alt+Enter on a focused header sizes the column to its content, the keyboard equivalent of double-clicking the resize handle", async ({
+  mount,
+}) => {
+  const wideColumns: readonly ColumnDefinition<Row>[] = [
+    { field: "id", width: 300 },
+    { field: "name", width: 120 },
+  ];
+  const root = await mountGrid(
+    mount,
+    <DataGridComponent
+      columns={wideColumns}
+      dataSource={buildRows(3)}
+      label="Fit content via keyboard"
+      resizableColumns
+      resizeMode="fixed"
+    />,
+  );
+  const before = await colWidth(root, 0);
+  const header = root.locator("thead th").first();
+  await header.focus();
+  await header.press("Alt+Enter");
+  const after = await colWidth(root, 0);
+  expect(after).toBeLessThan(before);
+  expect(after).toBeGreaterThan(0);
+});
+
+test("Alt+Enter does nothing on a column that is not resizable", async ({
+  mount,
+}) => {
+  const root = await mountGrid(
+    mount,
+    <DataGridComponent
+      columns={columns}
+      dataSource={buildRows(2)}
+      label="No resize via keyboard"
+    />,
+  );
+  const before = await colWidth(root, 0);
+  const header = root.locator("thead th").first();
+  await header.focus();
+  await header.press("Alt+Enter");
+  expect(await colWidth(root, 0)).toBeCloseTo(before, 0);
+});
+
 test("double-click still measures correctly when the column id needs CSS.escape", async ({
   mount,
 }) => {

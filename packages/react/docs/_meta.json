@@ -1,3 +1,12 @@
 {
-  "order": ["overview", "data-grid", "events", "columns", "rows", "cells"]
+  "order": [
+    "overview",
+    "data-grid",
+    "accessibility",
+    "events",
+    "imperative-handle",
+    "columns",
+    "rows",
+    "cells"
+  ]
 }

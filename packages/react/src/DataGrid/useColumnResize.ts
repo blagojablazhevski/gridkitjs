@@ -10,6 +10,7 @@ import {
   beginColumnResize,
   clampColumnWidth,
   resolveColumnConstraints,
+  revertColumnSize,
   sizeColumnToContent,
   type ColumnResizeEvent,
   type ColumnSizeDefaults,
@@ -17,6 +18,7 @@ import {
 } from "@gridkitjs/core";
 import type { ResolvedColumn } from "./DataGrid";
 import measureColumnContent from "./measureColumnContent";
+import { startPointerGesture } from "./pointerGesture";
 
 interface UseColumnResizeOptions {
   tableRef: RefObject<HTMLTableElement | null>;
@@ -50,6 +52,13 @@ export default function useColumnResize<Row>({
 }: UseColumnResizeOptions): ColumnResizeApi<Row> {
   const [activeColumnId, setActiveColumnId] = useState<string | null>(null);
 
+  /**
+   * Deliberately not built on `commitIfChanged`: its "move" phase is called
+   * on every pointer move, including ones pinned against a min/max clamp
+   * where the resulting width doesn't change, and it intentionally fires
+   * `onColumnResize` anyway rather than adopting the bail-if-unchanged guard
+   * every other commit-style call site has.
+   */
   function commit(
     base: ColumnSizingState,
     columnId: string,
@@ -84,75 +93,43 @@ export default function useColumnResize<Row>({
     // Otherwise the drag selects the header text it started on.
     event.preventDefault();
     event.stopPropagation();
-    handle.setPointerCapture(pointerId);
     setActiveColumnId(session.columnId);
 
-    function move(moveEvent: PointerEvent): void {
-      width = applyColumnResize(session, moveEvent.clientX);
-      commit(base, session.columnId, width, "move");
-    }
-
-    function stop(): void {
-      handle.removeEventListener("pointermove", move);
-      handle.removeEventListener("pointerup", end);
-      handle.removeEventListener("pointercancel", cancel);
-      window.removeEventListener("keydown", onKeyDown);
-      if (handle.hasPointerCapture(pointerId)) {
-        handle.releasePointerCapture(pointerId);
-      }
-      setActiveColumnId(null);
-    }
-
-    function end(): void {
-      stop();
-      // A click with no intervening `move` — as every double-click's two
-      // constituent clicks are — leaves `width` at `startWidth`. Committing
-      // that anyway would fire a spurious onColumnResize on every click.
-      if (width !== session.startWidth) {
-        commit(base, session.columnId, width, "end");
-      }
-    }
-
-    /**
-     * Escape puts back only the dragged column's pre-drag width, merged into
-     * whatever the sizing state is *now* — not the `base` snapshot taken at
-     * drag-start — so a different column resized via keyboard while this drag
-     * was still open keeps its change instead of being clobbered by a stale
-     * restore. A column that had no stored width at all is correctly omitted
-     * by deleting the key rather than merging `startWidth` back in, which
-     * would otherwise leave it pinned and hidden from auto-fit.
-     */
-    function cancel(): void {
-      stop();
-      setSizing((current) => {
-        const next = Object.fromEntries(
-          Object.entries(current).filter(
-            ([columnId]) => columnId !== session.columnId,
-          ),
-        );
-        if (session.columnId in base) {
-          next[session.columnId] = base[session.columnId] as number;
+    startPointerGesture(handle, pointerId, {
+      onMove(moveEvent) {
+        width = applyColumnResize(session, moveEvent.clientX);
+        commit(base, session.columnId, width, "move");
+      },
+      onEnd() {
+        setActiveColumnId(null);
+        // A click with no intervening `move` — as every double-click's two
+        // constituent clicks are — leaves `width` at `startWidth`. Committing
+        // that anyway would fire a spurious onColumnResize on every click.
+        if (width !== session.startWidth) {
+          commit(base, session.columnId, width, "end");
         }
-        onColumnResize?.({
-          columnId: session.columnId,
-          width: session.startWidth,
-          sizing: next,
-          phase: "end",
+      },
+      /**
+       * Escape puts back only the dragged column's pre-drag width, merged
+       * into whatever the sizing state is *now* — not the `base` snapshot
+       * taken at drag-start — so a different column resized via keyboard
+       * while this drag was still open keeps its change instead of being
+       * clobbered by a stale restore.
+       */
+      onCancel() {
+        setActiveColumnId(null);
+        setSizing((current) => {
+          const next = revertColumnSize(current, base, session.columnId);
+          onColumnResize?.({
+            columnId: session.columnId,
+            width: session.startWidth,
+            sizing: next,
+            phase: "end",
+          });
+          return next;
         });
-        return next;
-      });
-    }
-
-    function onKeyDown(keyEvent: KeyboardEvent): void {
-      if (keyEvent.key === "Escape") {
-        cancel();
-      }
-    }
-
-    handle.addEventListener("pointermove", move);
-    handle.addEventListener("pointerup", end);
-    handle.addEventListener("pointercancel", cancel);
-    window.addEventListener("keydown", onKeyDown);
+      },
+    });
   }
 
   function sizeToContent(entry: ResolvedColumn<Row>): void {
