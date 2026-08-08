@@ -6,6 +6,7 @@ import {
 import {
   movesColumn,
   resolveDropBefore,
+  resolveKeyboardDropTarget,
   type ColumnOrderState,
   type DropSide,
 } from "@gridkitjs/core";
@@ -168,24 +169,11 @@ export default function useColumnDrag<Row>({
   }
 
   function moveByKeyboard(entry: ResolvedColumn<Row>, direction: -1 | 1): void {
-    const index = order.indexOf(entry.id);
-    if (index === -1) {
+    const beforeId = resolveKeyboardDropTarget(order, entry.id, direction);
+    if (beforeId === undefined) {
       return;
     }
-
-    /**
-     * Moving right lands in front of the id two along: the gap immediately
-     * after a column is the one it already sits in.
-     */
-    const targetIndex = direction === -1 ? index - 1 : index + 2;
-    if (targetIndex < 0) {
-      return;
-    }
-
-    onDrop(
-      { kind: "column-order", beforeId: order[targetIndex] ?? null },
-      entry.id,
-    );
+    onDrop({ kind: "column-order", beforeId }, entry.id);
   }
 
   // A new object each render, as `useColumnResize` returns: the handlers close

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { KEYBOARD_STEP } from "@gridkitjs/core";
+import { buildKeyShortcuts, intentOf, KEYBOARD_STEP } from "@gridkitjs/core";
 import type { ResolvedColumn } from "../DataGrid";
 import { ariaAttr } from "../ariaAttr";
 import { classNames } from "../classNames";
@@ -9,7 +9,6 @@ import type { ColumnResizeApi } from "../useColumnResize";
 import type { ColumnSortApi } from "../useColumnSort";
 import { HEADER_ROW, type GridNavigationApi } from "../useGridNavigation";
 import {
-  intentOf,
   keyboardSelectIntent,
   type GridSelectionApi,
 } from "../useGridSelection";
@@ -96,17 +95,11 @@ export default function GridHeader<Row>({
           const sortDirection = sort.directionFor(entry.id);
           const sortPriority = sort.priorityFor(entry.id);
 
-          /**
-           * Announced so the keys are discoverable, since neither is a
-           * convention a user would try unprompted.
-           */
-          const shortcuts = [
-            entry.reorderable ? "Control+ArrowLeft Control+ArrowRight" : "",
-            entry.resizable ? "Alt+ArrowLeft Alt+ArrowRight" : "",
-            sortable ? "Alt+ArrowUp" : "",
-          ]
-            .filter(Boolean)
-            .join(" ");
+          const shortcuts = buildKeyShortcuts({
+            reorderable: entry.reorderable,
+            resizable: entry.resizable,
+            sortable,
+          });
 
           return (
             <th

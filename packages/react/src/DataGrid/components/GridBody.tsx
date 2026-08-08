@@ -1,8 +1,7 @@
-import type { ResolvedRow } from "@gridkitjs/core";
+import { intentOf, type ResolvedRow } from "@gridkitjs/core";
 import type { ResolvedColumn } from "../DataGrid";
 import type { GridNavigationApi } from "../useGridNavigation";
 import {
-  intentOf,
   keyboardSelectIntent,
   type GridSelectionApi,
 } from "../useGridSelection";
