@@ -412,6 +412,15 @@
     border-bottom: 1px solid var(--gridkit-line);
   }
 
+  /*
+   * The last row's bottom edge has no row below it to collapse with, so
+   * unlike every internal boundary it is a genuinely extra pixel — the same
+   * reason `borders-vertical` drops its `:last-child` border-right below.
+   */
+  .gridkit-data-grid.borders-horizontal .grid-row:last-child .grid-cell {
+    border-bottom: none;
+  }
+
   /* Vertical borders */
   .gridkit-data-grid.borders-vertical .grid-header .header-cell,
   .gridkit-data-grid.borders-vertical .grid-cell {
@@ -426,7 +435,8 @@
   /* Borders on all sides */
   .gridkit-data-grid.borders-all .grid-header .header-cell,
   .gridkit-data-grid.borders-all .grid-cell {
-    border: 1px solid var(--gridkit-line);
+    border-bottom: 1px solid var(--gridkit-line);
+    border-right: 1px solid var(--gridkit-line);
   }
 
   /*
@@ -442,5 +452,9 @@
   .gridkit-data-grid.borders-all .grid-header .header-cell:last-child,
   .gridkit-data-grid.borders-all .grid-cell:last-child {
     border-right: none;
+  }
+
+  .gridkit-data-grid.borders-all .grid-row:last-child .grid-cell {
+    border-bottom: none;
   }
 }
