@@ -1,7 +1,11 @@
 import type { ResolvedRow } from "@gridkitjs/core";
 import type { ResolvedColumn } from "../DataGrid";
 import type { GridNavigationApi } from "../useGridNavigation";
-import { intentOf, type GridSelectionApi } from "../useGridSelection";
+import {
+  intentOf,
+  keyboardSelectIntent,
+  type GridSelectionApi,
+} from "../useGridSelection";
 import GridRow from "./GridRow";
 
 interface GridBodyProps<Row> {
@@ -110,11 +114,11 @@ export default function GridBody<Row>({
           // Taken whether or not anything is selectable: Space would otherwise
           // scroll the grid out from under the focused cell.
           event.preventDefault();
-          select(found.rowId, found.position.columnId, {
-            ctrlKey: event.key === " " || event.ctrlKey,
-            metaKey: event.metaKey,
-            shiftKey: event.shiftKey,
-          });
+          select(
+            found.rowId,
+            found.position.columnId,
+            keyboardSelectIntent(event),
+          );
           return;
         }
         nav.onKeyDown(event);

@@ -1,6 +1,9 @@
 import { accessDotted } from "@gridkitjs/core";
 import { memo, type ReactNode } from "react";
 import type { ResolvedColumn } from "../DataGrid";
+import { ariaAttr } from "../ariaAttr";
+import { classNames } from "../classNames";
+import { tabIndexFor } from "../useGridNavigation";
 
 interface GridRowProps<Row> {
   columns: readonly ResolvedColumn<Row>[];
@@ -40,10 +43,8 @@ function GridRowComponent<Row>({
       aria-rowindex={rowIndex + 2}
       // Omitted rather than `false` when rows cannot be selected, which would
       // otherwise have every row announce that it is not.
-      {...(rowsSelectable && { "aria-selected": selected })}
-      className={["grid-row", selected ? "is-selected" : ""]
-        .filter(Boolean)
-        .join(" ")}
+      {...ariaAttr(rowsSelectable, "aria-selected", selected)}
+      className={classNames("grid-row", selected ? "is-selected" : "")}
     >
       {columns.map(({ id, column, alignment }, columnIndex) => {
         // Resolved either way, so a template that only formats the value never
@@ -57,17 +58,15 @@ function GridRowComponent<Row>({
             role="gridcell"
             data-gridkit-column={id}
             aria-colindex={columnIndex + 1}
-            tabIndex={columnIndex === focusedColumnIndex ? 0 : -1}
-            {...(cellsSelectable && { "aria-selected": cellSelected })}
-            className={[
+            tabIndex={tabIndexFor(columnIndex, focusedColumnIndex)}
+            {...ariaAttr(cellsSelectable, "aria-selected", cellSelected)}
+            className={classNames(
               "grid-cell",
               id === activeColumnId ? "is-resizing" : "",
               cellSelected || selectedColumnIds.has(id) ? "is-selected" : "",
               column.wrap?.cells ? "is-wrapped" : "",
               column.cellClassName ?? "",
-            ]
-              .filter(Boolean)
-              .join(" ")}
+            )}
             style={{ textAlign: alignment }}
           >
             {column.cellTemplate

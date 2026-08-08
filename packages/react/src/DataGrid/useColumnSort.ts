@@ -8,6 +8,7 @@ import {
   type SortDirection,
 } from "@gridkitjs/core";
 import type { ResolvedColumn } from "./DataGrid";
+import { commitIfChanged } from "./commitIfChanged";
 
 interface UseColumnSortOptions {
   sort: ColumnSortState;
@@ -43,11 +44,9 @@ export default function useColumnSort<Row>({
     event: { shiftKey: boolean },
   ): void {
     const next = toggleColumnSort(sort, entry.id, { stack: event.shiftKey });
-    if (next === sort) {
-      return;
-    }
-    setSort(next);
-    onColumnSortChange?.({ columnId: entry.id, sort: next });
+    commitIfChanged(sort, next, setSort, (committed) => {
+      onColumnSortChange?.({ columnId: entry.id, sort: committed });
+    });
   }
 
   // A new object each render, as the other hooks here return.
