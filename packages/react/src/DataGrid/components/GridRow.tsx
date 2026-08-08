@@ -60,6 +60,7 @@ function GridRowComponent<Row>({
             aria-colindex={columnIndex + 1}
             tabIndex={tabIndexFor(columnIndex, focusedColumnIndex)}
             {...ariaAttr(cellsSelectable, "aria-selected", cellSelected)}
+            {...ariaAttr(cellsSelectable, "aria-keyshortcuts", "Space Enter")}
             className={classNames(
               "grid-cell",
               id === activeColumnId ? "is-resizing" : "",

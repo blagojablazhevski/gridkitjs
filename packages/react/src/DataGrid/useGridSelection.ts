@@ -97,6 +97,8 @@ interface UseGridSelectionOptions<Row> {
   setCellSelection: Dispatch<SetStateAction<CellSelectionState>>;
   callbacks: SelectionCallbacks<Row>;
   announce: (message: string) => void;
+  /** What a column is called in an announcement — see `DataGrid.tsx`. */
+  columnName: (columnId: string) => string;
 }
 
 export interface GridSelectionApi {
@@ -177,6 +179,7 @@ export default function useGridSelection<Row>({
   setCellSelection,
   callbacks,
   announce,
+  columnName,
 }: UseGridSelectionOptions<Row>): GridSelectionApi {
   const rowMode = selectable?.rows ?? false;
   const columnMode = selectable?.columns ?? false;
@@ -290,6 +293,17 @@ export default function useGridSelection<Row>({
         deselected,
         selection: committed,
       });
+      // Unlike rows and columns, a cell selection is always exactly one cell
+      // — there is no multi-cell range — so it never crosses
+      // `announceCount`'s >1 threshold and the focused cell's own
+      // `aria-selected` is the only feedback a screen-reader user would
+      // otherwise get. Announced unconditionally here instead, on every
+      // commit that lands on a cell.
+      if (selected !== null) {
+        announce(
+          `${columnName(selected.columnId)}, row ${String(selected.rowIndex + 1)}, selected`,
+        );
+      }
     });
   }
 
