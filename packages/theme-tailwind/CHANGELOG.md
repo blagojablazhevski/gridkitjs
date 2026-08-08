@@ -1,5 +1,11 @@
 # @gridkitjs/theme-tailwind
 
+## 0.3.2
+
+### Patch Changes
+
+- 29f2c39: The last row's cells no longer draw a bottom border under `borders-horizontal` or `borders-all` — previously it rendered as a stray extra edge below the table.
+
 ## 0.3.1
 
 ### Patch Changes
