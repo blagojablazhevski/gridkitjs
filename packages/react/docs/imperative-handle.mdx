@@ -1,0 +1,60 @@
+---
+title: "Imperative handle"
+description: "The DataGridApi reached through DataGridComponent's ref — reading live grid state and triggering focus, scroll, and selection actions."
+---
+
+`DataGridComponent` accepts a `ref` typed `Ref<DataGridApi<Row>>`, for the state and actions that aren't otherwise reachable from outside: the grid's DOM nodes, its live column sizing/order/sort and selection, and the handful of actions every grid ref carries.
+
+```ts
+import { useRef } from "react";
+import { DataGridComponent, type DataGridApi } from "@gridkitjs/react";
+
+const gridRef = useRef<DataGridApi<Row>>(null);
+
+<DataGridComponent ref={gridRef} columns={columns} dataSource={rows} />;
+
+gridRef.current?.scrollToRow("42");
+gridRef.current?.getColumnSizing();
+```
+
+Sizing, order, sort, and selection stay uncontrolled exactly as they are without a ref — set their starting values with `defaultColumnSizing` and friends. `DataGridApi` is for reading current state and triggering the actions below, not a second way to drive that same state.
+
+## Elements
+
+| Member    | Type                       | Description                             |
+| --------- | -------------------------- | --------------------------------------- |
+| `element` | `HTMLDivElement \| null`   | The grid's scrollable viewport element. |
+| `table`   | `HTMLTableElement \| null` | The grid's `<table>` element.           |
+
+## Reading state
+
+| Member                 | Returns                                     | Description                                               |
+| ---------------------- | ------------------------------------------- | --------------------------------------------------------- |
+| `getRows()`            | `readonly ResolvedRow<Row>[]`               | Rows as currently filtered and sorted — what's rendered.  |
+| `getColumns()`         | `readonly ResolvedColumn<Row>[]`            | Columns as currently sized and ordered — what's rendered. |
+| `getColumnSizing()`    | `ColumnSizingState`                         | Column widths, keyed by column id.                        |
+| `getColumnOrder()`     | `ColumnOrderState`                          | Column ids in their current render order.                 |
+| `getColumnSort()`      | `ColumnSortState`                           | The active sort, in priority order.                       |
+| `getRowSelection()`    | `SelectionState`                            | Selected row ids.                                         |
+| `getColumnSelection()` | `SelectionState`                            | Selected column ids.                                      |
+| `getCellSelection()`   | `CellSelectionState`                        | The selected cell, if any.                                |
+| `getFocusedCell()`     | `{ rowIndex: number; columnIndex: number }` | The cell currently holding the grid's single tab stop.    |
+
+## Actions
+
+| Member                               | Description                                                                               |
+| ------------------------------------ | ----------------------------------------------------------------------------------------- |
+| `focusCell(rowIndex, columnIndex)`   | Moves the grid's tab stop, and the browser's focus, to a cell.                            |
+| `clearSelection()`                   | Clears row, column, and cell selection together — the same as pressing <Kbd>Escape</Kbd>. |
+| `selectAllRows()`                    | Selects every row — the same as <Kbd>Ctrl</Kbd>+<Kbd>A</Kbd>.                             |
+| `scrollToRow(rowId, options?)`       | Scrolls the row with the given id into view, if it is currently shown.                    |
+| `scrollToColumn(columnId, options?)` | Scrolls the column with the given id into view.                                           |
+
+`options` on `scrollToRow`/`scrollToColumn` is a standard
+[`ScrollIntoViewOptions`](https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollIntoView),
+passed straight through.
+
+## See also
+
+- [DataGridComponent](/docs/react/data-grid) for the rest of the component's props.
+- [Events](/docs/react/events) for callbacks that report the same interactions as they happen, rather than being queried on demand.
