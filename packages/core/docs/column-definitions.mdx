@@ -39,9 +39,10 @@ const columns = defineColumnsFromRows(rows);
 <DataGridComponent columns={columns} dataSource={rows} borders="horizontal" />;
 ```
 
-| Function                      | Type                               | Description                                                               |
-| ----------------------------- | ---------------------------------- | ------------------------------------------------------------------------- |
-| `defineColumnsFromRows(rows)` | `readonly ColumnDefinition<Row>[]` | Infers a type and alignment per field, one level into nested objects.     |
-| `accessDotted(obj, path)`     | `unknown`                          | Reads a value at a dotted path, e.g. "Application.Id".                    |
-| `alignmentForType(type)`      | `ColumnAlignment`                  | Alignment a column type defaults to — "right" for numbers.                |
-| `resolveColumnLabel(column)`  | `string`                           | The label a column's header falls back to when it sets no headerTemplate. |
+| Function                          | Type                               | Description                                                                                     |
+| --------------------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `defineColumnsFromRows(rows)`     | `readonly ColumnDefinition<Row>[]` | Infers a type and alignment per field, one level into nested objects.                           |
+| `accessDotted(obj, path)`         | `unknown`                          | Reads a value at a dotted path, e.g. "Application.Id".                                          |
+| `alignmentForType(type)`          | `ColumnAlignment`                  | Alignment a column type defaults to — "right" for numbers.                                      |
+| `resolveColumnLabel(column)`      | `string`                           | The label a column's header falls back to when it sets no headerTemplate.                       |
+| `buildKeyShortcuts(capabilities)` | `string`                           | The aria-keyshortcuts string for a column header, naming only the keys that column responds to. |

@@ -17,6 +17,7 @@ resolveColumnWidths and fitColumnsToWidth are the functions DataGridComponent ca
 | `applyColumnResize(session, position)`                               | `number`                         | The width the dragged column takes with the pointer at position.                                                                    |
 | `sizeColumnToContent(measuredWidth, constraints)`                    | `number`                         | The width a double-click auto-fit resolves to, clamped to the column's bounds.                                                      |
 | `totalColumnWidth(resolved)`                                         | `number`                         | The sum of every resolved column's width.                                                                                           |
+| `revertColumnSize(current, base, columnId)`                          | `ColumnSizingState`              | The sizing state with columnId reverted to its width in base — or omitted entirely if base had none — for Escape to restore.        |
 
 ## The same logic, in the React grid
 

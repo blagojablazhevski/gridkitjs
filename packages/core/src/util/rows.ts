@@ -3,7 +3,11 @@ import type {
   FilterState,
   ResolvedColumn,
   ResolvedRow,
+  SelectedCell,
+  SelectedCellRef,
+  SelectedColumn,
 } from "../types";
+import { accessDotted } from "./grid";
 import { filterRows } from "./filtering";
 import { sortRows } from "./sorting";
 
@@ -25,4 +29,70 @@ export function resolveShownRows<Row>(
   columns: readonly ResolvedColumn<Row, unknown>[],
 ): readonly ResolvedRow<Row>[] {
   return sortRows(filterRows(rows, filter, columns), sort, columns);
+}
+
+/**
+ * `ids` resolved back to the rows behind them, keyed by `rowsById`.
+ *
+ * An id with no row behind it is dropped rather than left `undefined`: a
+ * selection outlives a change to the data, so that filtering a row out and
+ * back leaves it selected, and only what still exists can be handed to a
+ * callback.
+ */
+export function resolveRows<Row>(
+  rowsById: ReadonlyMap<string, ResolvedRow<Row>>,
+  ids: readonly string[],
+): readonly ResolvedRow<Row>[] {
+  return ids.map((id) => rowsById.get(id)).filter((row) => row !== undefined);
+}
+
+/**
+ * `ids` resolved back to the columns behind them, paired with the position
+ * each holds in `columns` — a stale id is dropped, matching `resolveRows`.
+ */
+export function resolveColumns<Row, Node>(
+  columns: readonly ResolvedColumn<Row, Node>[],
+  ids: readonly string[],
+): readonly SelectedColumn<Row, Node>[] {
+  return ids
+    .map((id) => {
+      const columnIndex = columns.findIndex((entry) => entry.id === id);
+      const column = columns[columnIndex];
+      return column === undefined
+        ? undefined
+        : { columnId: id, column, columnIndex };
+    })
+    .filter((column) => column !== undefined);
+}
+
+/**
+ * `cell` resolved down to the row, column and value it addresses — `null`
+ * when there is no cell, or when either half of it names a row or column
+ * that no longer exists.
+ */
+export function resolveCell<Row, Node>(
+  rowsById: ReadonlyMap<string, ResolvedRow<Row>>,
+  columns: readonly ResolvedColumn<Row, Node>[],
+  cell: SelectedCellRef | null,
+): SelectedCell<Row, Node> | null {
+  if (cell === null) {
+    return null;
+  }
+  const entry = rowsById.get(cell.rowId);
+  const columnIndex = columns.findIndex(
+    (candidate) => candidate.id === cell.columnId,
+  );
+  const column = columns[columnIndex];
+  if (entry === undefined || column === undefined) {
+    return null;
+  }
+  return {
+    rowId: cell.rowId,
+    columnId: cell.columnId,
+    row: entry.row,
+    column,
+    rowIndex: entry.rowIndex,
+    columnIndex,
+    value: accessDotted(entry.row, column.column.field),
+  };
 }

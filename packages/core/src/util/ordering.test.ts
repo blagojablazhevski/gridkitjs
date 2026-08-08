@@ -6,6 +6,7 @@ import {
   moveColumnBefore,
   movesColumn,
   resolveDropBefore,
+  resolveKeyboardDropTarget,
 } from "./ordering";
 
 interface SampleRow {
@@ -162,5 +163,44 @@ describe("resolveDropBefore", () => {
 
   test("takes null for a target the order does not hold", () => {
     expect(resolveDropBefore(order, "Missing", "after")).toBeNull();
+  });
+});
+
+describe("resolveKeyboardDropTarget", () => {
+  const order = ["Id", "Name", "Status"];
+
+  test("moving left lands before the previous column", () => {
+    expect(resolveKeyboardDropTarget(order, "Status", -1)).toBe("Name");
+  });
+
+  test("moving right lands before the column two along", () => {
+    expect(resolveKeyboardDropTarget(order, "Id", 1)).toBe("Status");
+  });
+
+  test("moving right past the end appends, a real null rather than a no-op", () => {
+    expect(resolveKeyboardDropTarget(order, "Name", 1)).toBeNull();
+  });
+
+  test("is undefined moving left from the first column", () => {
+    expect(resolveKeyboardDropTarget(order, "Id", -1)).toBeUndefined();
+  });
+
+  test("is undefined for an id the order does not hold", () => {
+    expect(resolveKeyboardDropTarget(order, "Missing", 1)).toBeUndefined();
+  });
+
+  test("agrees with moveByKeyboard's own move for every column and direction", () => {
+    for (const columnId of order) {
+      for (const direction of [-1, 1] as const) {
+        const index = order.indexOf(columnId);
+        const targetIndex = direction === -1 ? index - 1 : index + 2;
+        const expected =
+          targetIndex < 0 ? undefined : (order[targetIndex] ?? null);
+
+        expect(resolveKeyboardDropTarget(order, columnId, direction)).toBe(
+          expected,
+        );
+      }
+    }
   });
 });

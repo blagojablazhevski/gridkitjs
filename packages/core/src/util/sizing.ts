@@ -275,3 +275,25 @@ export function sizeColumnToContent(
 ): number {
   return clampColumnWidth(Math.ceil(measuredWidth + padding), constraints);
 }
+
+/**
+ * `current` with `columnId` reverted to its width in `base` — or omitted
+ * entirely if `base` had none — for Escape to restore a resize in progress.
+ *
+ * A column with no stored width in `base` is correctly omitted by deleting
+ * the key rather than merging its `base` width back in, which would
+ * otherwise leave it pinned and hidden from auto-fit.
+ */
+export function revertColumnSize(
+  current: ColumnSizingState,
+  base: ColumnSizingState,
+  columnId: string,
+): ColumnSizingState {
+  const next = Object.fromEntries(
+    Object.entries(current).filter(([id]) => id !== columnId),
+  );
+  if (columnId in base) {
+    next[columnId] = base[columnId] as number;
+  }
+  return next;
+}
