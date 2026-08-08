@@ -2,6 +2,7 @@
   "order": [
     "overview",
     "data-grid",
+    "accessibility",
     "events",
     "imperative-handle",
     "columns",

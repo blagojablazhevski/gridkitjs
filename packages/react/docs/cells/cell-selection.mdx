@@ -3,7 +3,7 @@ title: "Cell selection"
 description: "Letting the user select one cell at a time with selectable.cells."
 ---
 
-selectable.cells takes only false or "single": a cell addresses one value, so there is no "multiple" and no range to take. A click moves the selection to that cell; Ctrl-click on the selected cell clears it.
+selectable.cells takes a CellSelectionMode — only false or "single": a cell addresses one value, so there is no "multiple" and no range to take. A click moves the selection to that cell; Ctrl-click on the selected cell clears it.
 
 ## Single-select cells
 
@@ -26,6 +26,30 @@ selectable.cells takes only false or "single": a cell addresses one value, so th
 | Prop                            | Type                                        | Default | Description                                                                                                                                               |
 | ------------------------------- | ------------------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `selectable.cells`              | `false \| "single"`                         | `false` | How many cells the user may select at once — no "multiple": a cell addresses one value, so there is no range to take.                                     |
-| `defaultCellSelection`          | `CellSelectionState`                        |         | The cell selected to start with. Uncontrolled.                                                                                                            |
+| `defaultCellSelection`          | `CellSelectionState`                        |         | The cell selected to start with — a `SelectedCellRef` (`{ rowId, columnId }`), or `null` for none. Uncontrolled.                                          |
 | `onCellSelect / onCellDeselect` | `(event: CellSelectEvent) => void`          |         | Once for the cell selected, once for the cell deselected.                                                                                                 |
 | `onCellSelectionChange`         | `(event: CellSelectionChangeEvent) => void` |         | Once per change with what was selected and what was deselected — one interaction can fill both, since moving between cells deselects and selects at once. |
+
+## Payload shapes
+
+`onCellSelect`/`onCellDeselect` fire a `CellSelectEvent<Row>`, `onCellSelectionChange` a `CellSelectionChangeEvent<Row>`:
+
+| Type                            | Field        | Type                        | Description                                                                 |
+| ------------------------------- | ------------ | --------------------------- | --------------------------------------------------------------------------- |
+| `CellSelectEvent<Row>`          | `cell`       | `SelectedCell<Row>`         | The cell selected or deselected.                                            |
+|                                 | `selection`  | `CellSelectionState`        | The selected cell's address, at that point.                                 |
+| `CellSelectionChangeEvent<Row>` | `selected`   | `SelectedCell<Row> \| null` | The cell now selected, or `null` if this change only cleared one.           |
+|                                 | `deselected` | `SelectedCell<Row> \| null` | The cell that was selected before, or `null` if there wasn't one.           |
+|                                 | `selection`  | `CellSelectionState`        | The same as `selected`, reduced to its address — `SelectedCellRef \| null`. |
+
+Each carries the cell as a `SelectedCell<Row>`, resolved down to the value it shows:
+
+| Field         | Type                  | Description                                                                                           |
+| ------------- | --------------------- | ----------------------------------------------------------------------------------------------------- |
+| `rowId`       | `string`              | The cell's row id.                                                                                    |
+| `columnId`    | `string`              | The cell's column id.                                                                                 |
+| `row`         | `Row`                 | The whole row this cell belongs to.                                                                   |
+| `column`      | `ResolvedColumn<Row>` | The resolved column — see [imperative handle](/docs/react/imperative-handle#resolved-row-and-column). |
+| `rowIndex`    | `number`              | Position among the rows as rendered.                                                                  |
+| `columnIndex` | `number`              | Position among the columns as displayed.                                                              |
+| `value`       | `unknown`             | The cell's value, read off the column's `field` path.                                                 |
