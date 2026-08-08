@@ -157,7 +157,10 @@ export function buildKeyShortcuts(
 ): string {
   return [
     capabilities.reorderable ? "Control+ArrowLeft Control+ArrowRight" : "",
-    capabilities.resizable ? "Alt+ArrowLeft Alt+ArrowRight" : "",
+    // Alt+Enter is the keyboard equivalent of double-clicking the resize
+    // handle to size the column to its content — same gate as the nudge
+    // shortcuts, since both are resize actions.
+    capabilities.resizable ? "Alt+ArrowLeft Alt+ArrowRight Alt+Enter" : "",
     capabilities.sortable ? "Alt+ArrowUp" : "",
   ]
     .filter(Boolean)

@@ -487,6 +487,7 @@ export function DataGridComponent<Row>({
     setCellSelection,
     callbacks,
     announce,
+    columnName,
   });
 
   const multiselectable =

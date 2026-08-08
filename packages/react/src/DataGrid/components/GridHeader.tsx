@@ -105,6 +105,12 @@ export default function GridHeader<Row>({
             <th
               key={entry.id}
               scope="col"
+              // Explicit, matching `GridRow.tsx`'s `role="gridcell"` on the
+              // body `<td>`: both sit inside a `<table role="grid">`, and
+              // mixing that non-native ancestor role with descendants that
+              // rely on implicit native role mapping is inconsistently
+              // resolved across browser/AT combinations.
+              role="columnheader"
               data-gridkit-column={entry.id}
               aria-colindex={index + 1}
               tabIndex={nav.tabIndexFor(HEADER_ROW, index)}
@@ -149,6 +155,13 @@ export default function GridHeader<Row>({
                 if (horizontal && event.altKey && entry.resizable) {
                   event.preventDefault();
                   resize.nudge(entry, direction * KEYBOARD_STEP);
+                  return;
+                }
+                // The keyboard equivalent of double-clicking the resize
+                // handle, which auto-fits the column to its content.
+                if (event.key === "Enter" && event.altKey && entry.resizable) {
+                  event.preventDefault();
+                  resize.sizeToContent(entry);
                   return;
                 }
                 if (event.key === "ArrowUp" && event.altKey && sortable) {

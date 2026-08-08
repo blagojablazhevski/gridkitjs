@@ -335,7 +335,7 @@ describe("buildKeyShortcuts", () => {
         sortable: true,
       }),
     ).toBe(
-      "Control+ArrowLeft Control+ArrowRight Alt+ArrowLeft Alt+ArrowRight Alt+ArrowUp",
+      "Control+ArrowLeft Control+ArrowRight Alt+ArrowLeft Alt+ArrowRight Alt+Enter Alt+ArrowUp",
     );
   });
 
@@ -346,7 +346,7 @@ describe("buildKeyShortcuts", () => {
         resizable: true,
         sortable: false,
       }),
-    ).toBe("Alt+ArrowLeft Alt+ArrowRight");
+    ).toBe("Alt+ArrowLeft Alt+ArrowRight Alt+Enter");
   });
 
   test("is empty for a column with none of the three", () => {
