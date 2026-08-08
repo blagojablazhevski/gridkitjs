@@ -1,11 +1,18 @@
+import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { KEYBOARD_STEP } from "@gridkitjs/core";
 import type { ResolvedColumn } from "../DataGrid";
+import { ariaAttr } from "../ariaAttr";
+import { classNames } from "../classNames";
 import type { ColumnDragApi } from "../useColumnDrag";
 import type { ColumnResizeApi } from "../useColumnResize";
 import type { ColumnSortApi } from "../useColumnSort";
 import { HEADER_ROW, type GridNavigationApi } from "../useGridNavigation";
-import { intentOf, type GridSelectionApi } from "../useGridSelection";
+import {
+  intentOf,
+  keyboardSelectIntent,
+  type GridSelectionApi,
+} from "../useGridSelection";
 
 interface GridHeaderProps<Row> {
   columns: readonly ResolvedColumn<Row>[];
@@ -17,6 +24,23 @@ interface GridHeaderProps<Row> {
   selection: GridSelectionApi;
 }
 
+/** The common attributes behind every icon here — just the `<path>`s differ. */
+function Icon({ children }: { children: ReactNode }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {children}
+    </svg>
+  );
+}
+
 /**
  * The two glyphs a sort toggle shows: a neutral hint before a column has a
  * direction, and a single chevron reused for both directions once it does —
@@ -24,34 +48,18 @@ interface GridHeaderProps<Row> {
  */
 function ChevronsUpDownIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
+    <Icon>
       <path d="m7 15 5 5 5-5" />
       <path d="m7 9 5-5 5 5" />
-    </svg>
+    </Icon>
   );
 }
 
 function ChevronUpIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
+    <Icon>
       <path d="m18 15-6-6-6 6" />
-    </svg>
+    </Icon>
   );
 }
 
@@ -107,9 +115,11 @@ export default function GridHeader<Row>({
               data-gridkit-column={entry.id}
               aria-colindex={index + 1}
               tabIndex={nav.tabIndexFor(HEADER_ROW, index)}
-              {...(selection.columnMode !== false && {
-                "aria-selected": selected,
-              })}
+              {...ariaAttr(
+                selection.columnMode !== false,
+                "aria-selected",
+                selected,
+              )}
               onFocus={() => {
                 nav.focusCell(HEADER_ROW, index);
               }}
@@ -159,17 +169,13 @@ export default function GridHeader<Row>({
                   event.preventDefault();
                   selection.selectColumn(
                     entry.id,
-                    intentOf({
-                      ctrlKey: event.key === " " || event.ctrlKey,
-                      metaKey: event.metaKey,
-                      shiftKey: event.shiftKey,
-                    }),
+                    intentOf(keyboardSelectIntent(event)),
                   );
                   return;
                 }
                 nav.onKeyDown(event);
               }}
-              className={[
+              className={classNames(
                 "header-cell",
                 entry.reorderable ? "is-reorderable" : "",
                 selected ? "is-selected" : "",
@@ -179,15 +185,13 @@ export default function GridHeader<Row>({
                 dropAfter ? "is-drop-after" : "",
                 column.wrap?.header ? "is-wrapped" : "",
                 column.headerClassName ?? "",
-              ]
-                .filter(Boolean)
-                .join(" ")}
-              {...(shortcuts !== "" && { "aria-keyshortcuts": shortcuts })}
-              {...(sortable &&
-                sortDirection !== null && {
-                  "aria-sort":
-                    sortDirection === "asc" ? "ascending" : "descending",
-                })}
+              )}
+              {...ariaAttr(shortcuts !== "", "aria-keyshortcuts", shortcuts)}
+              {...ariaAttr<"aria-sort", "ascending" | "descending">(
+                sortable && sortDirection !== null,
+                "aria-sort",
+                sortDirection === "asc" ? "ascending" : "descending",
+              )}
               {...(entry.reorderable && {
                 onPointerDown: (event) => {
                   drag.startDrag(entry, event);
@@ -203,12 +207,10 @@ export default function GridHeader<Row>({
                  * Alt+Shift+ArrowUp (stacking).
                  */
                 <span
-                  className={[
+                  className={classNames(
                     "header-sort-toggle",
                     sortDirection !== null ? `is-sorted-${sortDirection}` : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
+                  )}
                   aria-hidden="true"
                   tabIndex={-1}
                   onPointerDown={(event) => {

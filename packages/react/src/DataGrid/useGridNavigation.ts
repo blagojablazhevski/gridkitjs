@@ -61,6 +61,23 @@ function clampFocus(
 }
 
 /**
+ * `0` for the column holding the tab stop and `-1` for every other.
+ * Standalone rather than reached only through the hook's own `tabIndexFor`,
+ * because `GridRow` is `memo()`-wrapped and cannot take the whole `nav`
+ * object as a prop without defeating that boundary. Takes the row's own
+ * already-narrowed `focusedColumnIndex` (`null` when focus sits on a
+ * different row) rather than a `rowIndex`/`GridFocus` pair, since that
+ * narrowing — done once per row in `GridBody` — is what keeps a focus move
+ * from re-rendering every row instead of the two it actually touches.
+ */
+export function tabIndexFor(
+  columnIndex: number,
+  focusedColumnIndex: number | null,
+): 0 | -1 {
+  return columnIndex === focusedColumnIndex ? 0 : -1;
+}
+
+/**
  * The cell at a coordinate, found through the table's own row and cell
  * collections rather than a selector.
  *
@@ -153,12 +170,6 @@ export default function useGridNavigation({
     setStored(next);
   }
 
-  function tabIndexFor(rowIndex: number, columnIndex: number): 0 | -1 {
-    return rowIndex === focus.rowIndex && columnIndex === focus.columnIndex
-      ? 0
-      : -1;
-  }
-
   function onKeyDown(event: ReactKeyboardEvent<HTMLElement>): void {
     // Alt on an arrow resizes and Ctrl on one reorders; the header claims both
     // before this runs, and elsewhere they belong to the browser.
@@ -214,5 +225,14 @@ export default function useGridNavigation({
 
   // A new object each render, as the other hooks here return: the handlers
   // close over the focus they move from.
-  return { focus, tabIndexFor, focusCell, onKeyDown };
+  return {
+    focus,
+    tabIndexFor: (rowIndex, columnIndex) =>
+      tabIndexFor(
+        columnIndex,
+        rowIndex === focus.rowIndex ? focus.columnIndex : null,
+      ),
+    focusCell,
+    onKeyDown,
+  };
 }

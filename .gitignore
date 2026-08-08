@@ -21,3 +21,5 @@ test-results/
 .history
 .DS_Store
 *.local
+*.history*
+*.tmp*

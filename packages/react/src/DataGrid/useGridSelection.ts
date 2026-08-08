@@ -1,4 +1,10 @@
-import { useMemo, useRef, type Dispatch, type SetStateAction } from "react";
+import {
+  useMemo,
+  useRef,
+  type Dispatch,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type SetStateAction,
+} from "react";
 import {
   accessDotted,
   clearSelection,
@@ -30,6 +36,7 @@ import type {
   SelectedCell,
   SelectedColumn,
 } from "./DataGrid";
+import { commitIfChanged } from "./commitIfChanged";
 
 /**
  * What an interaction means for the selection, read off its modifiers once at
@@ -48,6 +55,24 @@ export function intentOf(event: {
   }
   // Cmd on a Mac is Ctrl everywhere else, and both mean the same thing here.
   return event.ctrlKey || event.metaKey ? "toggle" : "replace";
+}
+
+/**
+ * The modifiers a Space or Enter keydown carries, for a caller that means to
+ * hand them to `intentOf` as a click's modifiers would be. Space builds a
+ * selection up and Enter replaces it, as in the body — so Space is mapped to
+ * act like Ctrl, matching Ctrl-click and the plain click they stand in for.
+ */
+export function keyboardSelectIntent(event: ReactKeyboardEvent): {
+  ctrlKey: boolean;
+  metaKey: boolean;
+  shiftKey: boolean;
+} {
+  return {
+    ctrlKey: event.key === " " || event.ctrlKey,
+    metaKey: event.metaKey,
+    shiftKey: event.shiftKey,
+  };
 }
 
 /**
@@ -147,6 +172,36 @@ function countMessage(count: number, noun: string): string {
     : `${String(count)} ${noun}s selected`;
 }
 
+/** A `Set` re-derived only when `values` changes. */
+function useAsSet<T>(values: readonly T[]): ReadonlySet<T> {
+  return useMemo(() => new Set(values), [values]);
+}
+
+/**
+ * A `Map` keying `values` by their `key` property, re-derived only when
+ * `values` changes. Takes the key as a property name rather than an
+ * extractor function so that it stays a stable dependency across
+ * renders — an inline extractor handed in fresh each render would otherwise
+ * force a recompute on every render regardless of whether `values` changed.
+ */
+function useIndexedBy<T, K extends keyof T>(
+  values: readonly T[],
+  key: K,
+): ReadonlyMap<T[K], T> {
+  return useMemo(
+    () => new Map(values.map((value) => [value[key], value])),
+    [values, key],
+  );
+}
+
+/** `values.map((value) => value[key])`, re-derived only when `values` changes. */
+function useMappedArray<T, K extends keyof T>(
+  values: readonly T[],
+  key: K,
+): readonly T[K][] {
+  return useMemo(() => values.map((value) => value[key]), [values, key]);
+}
+
 /**
  * Turns an intent against a row, column or cell into the selection it implies,
  * and reports what changed.
@@ -172,18 +227,12 @@ export default function useGridSelection<Row>({
   const columnMode = selectable?.columns ?? false;
   const cellMode = selectable?.cells ?? false;
 
-  const rowsById = useMemo(
-    () => new Map(rows.map((entry) => [entry.rowId, entry])),
-    [rows],
-  );
-  const rowIds = useMemo(() => rows.map((entry) => entry.rowId), [rows]);
-  const columnIds = useMemo(() => columns.map((entry) => entry.id), [columns]);
+  const rowsById = useIndexedBy(rows, "rowId");
+  const rowIds = useMappedArray(rows, "rowId");
+  const columnIds = useMappedArray(columns, "id");
 
-  const selectedRowIds = useMemo(() => new Set(rowSelection), [rowSelection]);
-  const selectedColumnIds = useMemo(
-    () => new Set(columnSelection),
-    [columnSelection],
-  );
+  const selectedRowIds = useAsSet(rowSelection);
+  const selectedColumnIds = useAsSet(columnSelection);
 
   /**
    * Where a range is measured from: the last row or column selected by
@@ -253,91 +302,85 @@ export default function useGridSelection<Row>({
   function commitRows(next: SelectionState): void {
     // The unchanged-reference contract the core transforms keep: a click that
     // selects what was already selected neither renders nor reports.
-    if (next === rowSelection) {
-      return;
-    }
-    setRowSelection(next);
+    commitIfChanged(rowSelection, next, setRowSelection, (committed) => {
+      const { added, removed } = diffSelection(rowSelection, committed);
+      const addedRows = resolveRows(added);
+      const removedRows = resolveRows(removed);
 
-    const { added, removed } = diffSelection(rowSelection, next);
-    const addedRows = resolveRows(added);
-    const removedRows = resolveRows(removed);
-
-    for (const row of addedRows) {
-      callbacks.onRowSelect?.({ row, selection: next });
-    }
-    if (addedRows.length > 0) {
-      callbacks.onRowsSelect?.({ rows: addedRows, selection: next });
-    }
-    for (const row of removedRows) {
-      callbacks.onRowDeselect?.({ row, selection: next });
-    }
-    if (removedRows.length > 0) {
-      callbacks.onRowsDeselect?.({ rows: removedRows, selection: next });
-    }
-    callbacks.onRowSelectionChange?.({
-      added: addedRows,
-      removed: removedRows,
-      selected: resolveRows(next),
-      selection: next,
+      for (const row of addedRows) {
+        callbacks.onRowSelect?.({ row, selection: committed });
+      }
+      if (addedRows.length > 0) {
+        callbacks.onRowsSelect?.({ rows: addedRows, selection: committed });
+      }
+      for (const row of removedRows) {
+        callbacks.onRowDeselect?.({ row, selection: committed });
+      }
+      if (removedRows.length > 0) {
+        callbacks.onRowsDeselect?.({ rows: removedRows, selection: committed });
+      }
+      callbacks.onRowSelectionChange?.({
+        added: addedRows,
+        removed: removedRows,
+        selected: resolveRows(committed),
+        selection: committed,
+      });
+      announceCount(added.length + removed.length, committed.length, "row");
     });
-    announceCount(added.length + removed.length, next.length, "row");
   }
 
   function commitColumns(next: SelectionState): void {
-    if (next === columnSelection) {
-      return;
-    }
-    setColumnSelection(next);
+    commitIfChanged(columnSelection, next, setColumnSelection, (committed) => {
+      const { added, removed } = diffSelection(columnSelection, committed);
+      const addedColumns = resolveColumns(added);
+      const removedColumns = resolveColumns(removed);
 
-    const { added, removed } = diffSelection(columnSelection, next);
-    const addedColumns = resolveColumns(added);
-    const removedColumns = resolveColumns(removed);
-
-    for (const column of addedColumns) {
-      callbacks.onColumnSelect?.({ column, selection: next });
-    }
-    if (addedColumns.length > 0) {
-      callbacks.onColumnsSelect?.({ columns: addedColumns, selection: next });
-    }
-    for (const column of removedColumns) {
-      callbacks.onColumnDeselect?.({ column, selection: next });
-    }
-    if (removedColumns.length > 0) {
-      callbacks.onColumnsDeselect?.({
-        columns: removedColumns,
-        selection: next,
+      for (const column of addedColumns) {
+        callbacks.onColumnSelect?.({ column, selection: committed });
+      }
+      if (addedColumns.length > 0) {
+        callbacks.onColumnsSelect?.({
+          columns: addedColumns,
+          selection: committed,
+        });
+      }
+      for (const column of removedColumns) {
+        callbacks.onColumnDeselect?.({ column, selection: committed });
+      }
+      if (removedColumns.length > 0) {
+        callbacks.onColumnsDeselect?.({
+          columns: removedColumns,
+          selection: committed,
+        });
+      }
+      callbacks.onColumnSelectionChange?.({
+        added: addedColumns,
+        removed: removedColumns,
+        selected: resolveColumns(committed),
+        selection: committed,
       });
-    }
-    callbacks.onColumnSelectionChange?.({
-      added: addedColumns,
-      removed: removedColumns,
-      selected: resolveColumns(next),
-      selection: next,
+      announceCount(added.length + removed.length, committed.length, "column");
     });
-    announceCount(added.length + removed.length, next.length, "column");
   }
 
   function commitCell(next: CellSelectionState): void {
-    if (next === cellSelection) {
-      return;
-    }
-    setCellSelection(next);
+    commitIfChanged(cellSelection, next, setCellSelection, (committed) => {
+      // Resolved before and after in one place, so that moving between two
+      // cells reports the leaving and the arriving as one change.
+      const selected = resolveCell(committed);
+      const deselected = resolveCell(cellSelection);
 
-    // Resolved before and after in one place, so that moving between two cells
-    // reports the leaving and the arriving as one change.
-    const selected = resolveCell(next);
-    const deselected = resolveCell(cellSelection);
-
-    if (deselected !== null) {
-      callbacks.onCellDeselect?.({ cell: deselected, selection: next });
-    }
-    if (selected !== null) {
-      callbacks.onCellSelect?.({ cell: selected, selection: next });
-    }
-    callbacks.onCellSelectionChange?.({
-      selected,
-      deselected,
-      selection: next,
+      if (deselected !== null) {
+        callbacks.onCellDeselect?.({ cell: deselected, selection: committed });
+      }
+      if (selected !== null) {
+        callbacks.onCellSelect?.({ cell: selected, selection: committed });
+      }
+      callbacks.onCellSelectionChange?.({
+        selected,
+        deselected,
+        selection: committed,
+      });
     });
   }
 

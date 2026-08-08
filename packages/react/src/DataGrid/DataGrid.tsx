@@ -39,6 +39,8 @@ import {
 } from "@gridkitjs/core";
 import GridHeader from "./components/GridHeader";
 import GridBody from "./components/GridBody";
+import { ariaAttr } from "./ariaAttr";
+import { classNames } from "./classNames";
 import useColumnDrag, { type DropTarget } from "./useColumnDrag";
 import useColumnResize from "./useColumnResize";
 import useColumnSort from "./useColumnSort";
@@ -545,10 +547,13 @@ export function DataGridComponent<Row>({
         // The header is a row too, and counted from one.
         aria-rowcount={shownRows.length + 1}
         aria-colcount={resolved.length}
-        {...(multiselectable && { "aria-multiselectable": true })}
-        {...(labelledBy !== undefined && { "aria-labelledby": labelledBy })}
-        {...(labelledBy === undefined &&
-          label !== undefined && { "aria-label": label })}
+        {...ariaAttr(multiselectable, "aria-multiselectable", true)}
+        {...ariaAttr(labelledBy !== undefined, "aria-labelledby", labelledBy)}
+        {...ariaAttr(
+          labelledBy === undefined && label !== undefined,
+          "aria-label",
+          label,
+        )}
         onKeyDown={(event) => {
           /*
            * The two keys that address the grid rather than a cell, and so are
@@ -577,7 +582,7 @@ export function DataGridComponent<Row>({
         // Widths are only honoured exactly when the table is as wide as its
         // columns; at `100%` the fixed layout redistributes the difference.
         style={{ width: totalColumnWidth(resolved) }}
-        className={[
+        className={classNames(
           "gridkit-data-grid",
           borders ? `borders-${borders}` : "",
           // Hover is on by default and selection off, so one set of classes
@@ -589,9 +594,7 @@ export function DataGridComponent<Row>({
           selection.rowMode === false ? "" : "selectable-rows",
           selection.columnMode === false ? "" : "selectable-columns",
           selection.cellMode === false ? "" : "selectable-cells",
-        ]
-          .filter(Boolean)
-          .join(" ")}
+        )}
       >
         <colgroup>
           {resolved.map((entry) => (
