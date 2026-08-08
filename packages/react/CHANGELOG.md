@@ -1,5 +1,84 @@
 # @gridkitjs/react
 
+## 0.6.0
+
+### Minor Changes
+
+- ac7695f: `DataGrid` accessibility fixes, closing gaps found auditing it against the
+  WAI-ARIA grid pattern:
+
+  - Selecting a cell now announces it (e.g. "name, row 2, selected") via the
+    grid's existing live region. Previously a grid configured with only cell
+    selection gave a screen-reader user no feedback at all when selecting a
+    cell — unlike row and column selection, which already announced counts.
+  - New keyboard shortcut: `Alt+Enter` on a focused, resizable column header
+    sizes that column to its content — the keyboard equivalent of
+    double-clicking its resize handle. Advertised via `aria-keyshortcuts`
+    alongside the existing resize/reorder/sort shortcuts, so `buildKeyShortcuts`
+    (`@gridkitjs/core`) now includes `Alt+Enter` in its output for a resizable
+    column.
+  - Header `<th>` cells now set `role="columnheader"` explicitly, matching the
+    explicit `role="gridcell"`/`role="row"` already set on body cells and rows,
+    rather than relying on `<th scope="col">`'s implicit role mapping inside a
+    `role="grid"` table.
+  - Body `<td>` cells now set `aria-keyshortcuts="Space Enter"` when cell
+    selection is enabled, matching the shortcuts header cells already
+    advertise.
+
+- ac7695f: `Borders` and `HoverableConfig` — the types behind `DataGridComponent`'s
+  `borders` and `hoverable` props — are now exported from `@gridkitjs/react`.
+- ac7695f: `DataGridComponent` accepts a `ref` prop typed `Ref<DataGridApi<Row>>`. The
+  handle exposes the grid's live column sizing/order/sort, row/column/cell
+  selection, resolved rows/columns, and the focused cell, plus `focusCell`,
+  `clearSelection`, `selectAllRows`, `scrollToRow`, and `scrollToColumn`.
+
+### Patch Changes
+
+- ac7695f: Internal refactor of `DataGrid`'s implementation: pointer-drag lifecycles
+  (column resize, column reorder), "compute next state, bail if unchanged,
+  persist, notify" selection/sort commits, conditional class-name and ARIA
+  attribute construction, keyboard select-intent handling, and a couple of
+  `useMemo`-derived lookup structures now go through shared internal helpers
+  instead of five-plus near-duplicate copies. No public API or rendered
+  behavior changes for a correct caller.
+
+  One deliberate exception: `useColumnResize`'s `commit` was already missing
+  the bail-if-unchanged guard the other commit-style call sites have, so its
+  `"move"`-phase `onColumnResize` calls during a drag pinned against a
+  min/max clamp were left as-is (still firing on every pointer move) rather
+  than silently gaining a new guard — kept out of the shared
+  `commitIfChanged` helper on purpose, with a comment at the call site.
+
+- ac7695f: `@gridkitjs/core` now exports pure grid logic that previously lived only
+  inside `@gridkitjs/react`'s `DataGrid` hooks, so a future non-React binding
+  (or any consumer working directly against `core`) can reuse it instead of
+  reimplementing it:
+
+  - `clampFocus`, `nextFocusForKey`, `HEADER_ROW`, and the `GridFocus`/
+    `NavigationModifiers` types — the header/body focus-navigation state
+    machine.
+  - `intentOf` and `applySelectionIntent`, plus the `SelectIntent` type —
+    reading a click or key press's modifiers into an intent, and applying it
+    to a `SelectionState`.
+  - `resolveRows`, `resolveColumns`, and `resolveCell` — resolving selected
+    ids back to the row/column/cell records behind them, dropping any id whose
+    row or column no longer exists.
+  - `resolveKeyboardDropTarget` — the `beforeId` a keyboard column-reorder
+    nudge produces, matching the pointer-drag drop path already in
+    `moveColumnBefore`.
+  - `buildKeyShortcuts` (and the `KeyShortcutCapabilities` type) — the
+    `aria-keyshortcuts` string for a column header.
+  - `revertColumnSize` — the sizing-state merge a cancelled resize reverts to.
+
+  `@gridkitjs/react`'s `DataGrid` hooks (`useGridNavigation`,
+  `useGridSelection`, `useColumnDrag`, `useColumnResize`) and `GridHeader` now
+  call these instead of defining them locally. No behavior change for a
+  correct caller — this is the same logic, moved.
+
+- Updated dependencies [ac7695f]
+- Updated dependencies [ac7695f]
+  - @gridkitjs/core@0.7.0
+
 ## 0.5.0
 
 ### Minor Changes

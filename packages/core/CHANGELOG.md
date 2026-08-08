@@ -1,5 +1,56 @@
 # @gridkitjs/core
 
+## 0.7.0
+
+### Minor Changes
+
+- ac7695f: `DataGrid` accessibility fixes, closing gaps found auditing it against the
+  WAI-ARIA grid pattern:
+
+  - Selecting a cell now announces it (e.g. "name, row 2, selected") via the
+    grid's existing live region. Previously a grid configured with only cell
+    selection gave a screen-reader user no feedback at all when selecting a
+    cell — unlike row and column selection, which already announced counts.
+  - New keyboard shortcut: `Alt+Enter` on a focused, resizable column header
+    sizes that column to its content — the keyboard equivalent of
+    double-clicking its resize handle. Advertised via `aria-keyshortcuts`
+    alongside the existing resize/reorder/sort shortcuts, so `buildKeyShortcuts`
+    (`@gridkitjs/core`) now includes `Alt+Enter` in its output for a resizable
+    column.
+  - Header `<th>` cells now set `role="columnheader"` explicitly, matching the
+    explicit `role="gridcell"`/`role="row"` already set on body cells and rows,
+    rather than relying on `<th scope="col">`'s implicit role mapping inside a
+    `role="grid"` table.
+  - Body `<td>` cells now set `aria-keyshortcuts="Space Enter"` when cell
+    selection is enabled, matching the shortcuts header cells already
+    advertise.
+
+- ac7695f: `@gridkitjs/core` now exports pure grid logic that previously lived only
+  inside `@gridkitjs/react`'s `DataGrid` hooks, so a future non-React binding
+  (or any consumer working directly against `core`) can reuse it instead of
+  reimplementing it:
+
+  - `clampFocus`, `nextFocusForKey`, `HEADER_ROW`, and the `GridFocus`/
+    `NavigationModifiers` types — the header/body focus-navigation state
+    machine.
+  - `intentOf` and `applySelectionIntent`, plus the `SelectIntent` type —
+    reading a click or key press's modifiers into an intent, and applying it
+    to a `SelectionState`.
+  - `resolveRows`, `resolveColumns`, and `resolveCell` — resolving selected
+    ids back to the row/column/cell records behind them, dropping any id whose
+    row or column no longer exists.
+  - `resolveKeyboardDropTarget` — the `beforeId` a keyboard column-reorder
+    nudge produces, matching the pointer-drag drop path already in
+    `moveColumnBefore`.
+  - `buildKeyShortcuts` (and the `KeyShortcutCapabilities` type) — the
+    `aria-keyshortcuts` string for a column header.
+  - `revertColumnSize` — the sizing-state merge a cancelled resize reverts to.
+
+  `@gridkitjs/react`'s `DataGrid` hooks (`useGridNavigation`,
+  `useGridSelection`, `useColumnDrag`, `useColumnResize`) and `GridHeader` now
+  call these instead of defining them locally. No behavior change for a
+  correct caller — this is the same logic, moved.
+
 ## 0.6.0
 
 ### Minor Changes
